@@ -1,0 +1,51 @@
+import { TestimonialItem } from '../types';
+
+export const testimonials: TestimonialItem[] = [
+  {
+    id: '1',
+    name: 'Sarah Johnson',
+    avatar: 'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg',
+    rating: 5,
+    text: 'Manish captured our wedding day perfectly! The photos are stunning and he made everyone feel so comfortable.',
+    date: '2023-12-10',
+    location: 'New York',
+    featured: true,
+  },
+  {
+    id: '2',
+    name: 'David & Emily Chen',
+    avatar: 'https://images.pexels.com/photos/936090/pexels-photo-936090.jpeg',
+    rating: 5,
+    text: 'We couldn\'t be happier with our wedding film. Manish has a true talent for storytelling through cinematography.',
+    date: '2023-11-15',
+    location: 'San Francisco',
+    featured: true,
+  },
+  {
+    id: '3',
+    name: 'Priya Patel',
+    avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg',
+    rating: 4,
+    text: 'Our pre-wedding photoshoot exceeded expectations. Manish suggested amazing locations and poses that felt natural.',
+    date: '2024-01-05',
+    location: 'Chicago',
+    featured: true,
+  },
+  {
+    id: '4',
+    name: 'Michael Thompson',
+    rating: 5,
+    text: 'The destination wedding package was worth every penny. Manish and his team were professional, friendly, and captured moments we didn\'t even know happened!',
+    date: '2023-10-22',
+    location: 'Cancun, Mexico',
+  },
+  {
+    id: '5',
+    name: 'Lisa & Robert Garcia',
+    rating: 5,
+    text: 'From our first meeting to receiving our photos, the entire experience was flawless. Truly an artist with an eye for capturing emotions.',
+    date: '2024-02-18',
+    location: 'Miami',
+    featured: true,
+  },
+];
