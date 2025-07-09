@@ -32,7 +32,6 @@ const Header = () => {
     { label: 'Portfolio', path: '/portfolio' },
     { label: 'About', path: '/about' },
     { label: 'Offers', path: '/offers' },
-    { label: 'Blog', path: '/blog' },
     { label: 'Reviews', path: '/reviews' },
     { label: 'Contact', path: '/contact' },
     { label: 'Estimate', path: '/cost-estimator' },

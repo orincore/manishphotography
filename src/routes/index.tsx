@@ -14,7 +14,6 @@ const About = lazy(() => import('../pages/About'));
 const Contact = lazy(() => import('../pages/Contact'));
 const CostEstimator = lazy(() => import('../pages/CostEstimator'));
 const Offers = lazy(() => import('../pages/Offers'));
-const Blog = lazy(() => import('../pages/Blog'));
 const Reviews = lazy(() => import('../pages/Reviews'));
 const Login = lazy(() => import('../pages/Login'));
 const Register = lazy(() => import('../pages/Register'));
@@ -30,6 +29,8 @@ const CategoriesList = lazy(() => import('../pages/admin/CategoriesList'));
 const ProjectUpload = lazy(() => import('../pages/admin/ProjectUpload'));
 const ProjectsList = lazy(() => import('../pages/admin/ProjectsList'));
 const EditProject = lazy(() => import('../pages/admin/EditProject'));
+const HomepageElementsManager = lazy(() => import('../components/admin/HomepageElementsManager'));
+const ProgressTrackingDemo = lazy(() => import('../components/debug/ProgressTrackingDemo'));
 
 // Loading component
 const PageLoader = () => (
@@ -51,7 +52,6 @@ const AppRoutes = () => {
           <Route path="/contact" element={<MainLayout><Contact /></MainLayout>} />
           <Route path="/cost-estimator" element={<MainLayout><CostEstimator /></MainLayout>} />
           <Route path="/offers" element={<MainLayout><Offers /></MainLayout>} />
-          <Route path="/blog" element={<MainLayout><Blog /></MainLayout>} />
           <Route path="/reviews" element={<MainLayout><Reviews /></MainLayout>} />
           <Route path="/login" element={<MainLayout><Login /></MainLayout>} />
           <Route path="/register" element={<MainLayout><Register /></MainLayout>} />
@@ -76,6 +76,8 @@ const AppRoutes = () => {
             <Route path="projects" element={<ProjectsList />} />
             <Route path="projects/new" element={<ProjectUpload />} />
             <Route path="projects/edit/:projectId" element={<EditProject />} />
+            <Route path="homepage" element={<HomepageElementsManager />} />
+            <Route path="progress-demo" element={<ProgressTrackingDemo />} />
             {/* Add more admin routes here as we create them */}
           </Route>
         </Routes>

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../store/useAuthStore';
 import { Review } from '../types';
 import Section from '../components/common/Section';
 import ReviewForm from '../components/reviews/ReviewForm';
 import ReviewList from '../components/reviews/ReviewList';
+import EditReviewForm from '../components/reviews/EditReviewForm';
 import feedbackService from '../services/feedbackService';
 
 const Reviews = () => {
@@ -14,6 +15,7 @@ const Reviews = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [duplicateFeedback, setDuplicateFeedback] = useState<any | null>(null);
+  const [editingReview, setEditingReview] = useState<Review | null>(null);
 
   useEffect(() => {
     document.title = 'Reviews - Manish Photography';
@@ -58,7 +60,6 @@ const Reviews = () => {
       await feedbackService.submitFeedback({
         rating: reviewData.rating,
         comment: reviewData.comment,
-        projectId: '', // If you have a project context, pass the projectId here
       });
       // Refresh reviews after submission
       fetchReviews();
@@ -79,10 +80,33 @@ const Reviews = () => {
     }
   };
 
-  const handleEditFeedback = () => {
-    // Optionally, open an edit form/modal for the existing feedback
-    // For now, just show a message
-    alert('Edit feedback feature coming soon!');
+  const handleEditReview = (review: Review) => {
+    setEditingReview(review);
+  };
+
+  const handleUpdateReview = async (reviewId: string, data: { rating: number; comment: string }) => {
+    try {
+      await feedbackService.updateOwnFeedback(reviewId, data);
+      setEditingReview(null);
+      fetchReviews();
+    } catch (err: any) {
+      const errorMessage = err?.response?.data?.message || err?.message || 'Failed to update review.';
+      setError(errorMessage);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!confirm('Are you sure you want to delete your review? This action cannot be undone.')) {
+      return;
+    }
+    
+    try {
+      await feedbackService.deleteOwnFeedback(reviewId);
+      fetchReviews();
+    } catch (err: any) {
+      const errorMessage = err?.response?.data?.message || err?.message || 'Failed to delete review.';
+      setError(errorMessage);
+    }
   };
 
   const handleDeleteFeedback = async () => {
@@ -123,7 +147,7 @@ const Reviews = () => {
                 <div className="flex gap-2 mt-2">
                   <button
                     className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-                    onClick={handleEditFeedback}
+                    onClick={() => handleEditReview(duplicateFeedback.existingFeedback)}
                   >
                     Edit
                   </button>
@@ -142,10 +166,25 @@ const Reviews = () => {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
             </div>
           ) : (
-            <ReviewList reviews={reviews} />
+            <ReviewList 
+              reviews={reviews} 
+              onEdit={handleEditReview}
+              onDelete={handleDeleteReview}
+            />
           )}
         </div>
       </Section>
+      
+      {/* Edit Review Modal */}
+      <AnimatePresence>
+        {editingReview && (
+          <EditReviewForm
+            review={editingReview}
+            onSubmit={handleUpdateReview}
+            onCancel={() => setEditingReview(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

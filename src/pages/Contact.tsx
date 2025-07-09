@@ -36,8 +36,9 @@ const Contact = () => {
                   <div className="ml-4">
                     <p className="text-gray-900 dark:text-white font-medium">Our Studio</p>
                     <p className="text-gray-600 dark:text-gray-300">
-                      123 Photography Lane<br />
-                      New York, NY 10001
+                      Yadav Nagar, Shirgaon<br />
+                      Badlapur East, Maharashtra<br />
+                      India 421-503
                     </p>
                   </div>
                 </div>
@@ -47,7 +48,7 @@ const Contact = () => {
                   <div className="ml-4">
                     <p className="text-gray-900 dark:text-white font-medium">Phone</p>
                     <p className="text-gray-600 dark:text-gray-300">
-                      +1 (234) 567-8900
+                      +91 901180848
                     </p>
                   </div>
                 </div>
@@ -57,7 +58,7 @@ const Contact = () => {
                   <div className="ml-4">
                     <p className="text-gray-900 dark:text-white font-medium">Email</p>
                     <p className="text-gray-600 dark:text-gray-300">
-                      info@manishphotography.com
+                      manishbose94@gmail.com
                     </p>
                   </div>
                 </div>

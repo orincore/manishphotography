@@ -1,12 +1,16 @@
 import { motion } from 'framer-motion';
-import { Star, ThumbsUp } from 'lucide-react';
+import { Star, Edit, Trash2 } from 'lucide-react';
 import { Review } from '../../types';
+import { useAuthStore } from '../../store/useAuthStore';
 
 interface ReviewListProps {
   reviews: Review[];
+  onEdit?: (review: Review) => void;
+  onDelete?: (reviewId: string) => void;
 }
 
-const ReviewList: React.FC<ReviewListProps> = ({ reviews }) => {
+const ReviewList: React.FC<ReviewListProps> = ({ reviews, onEdit, onDelete }) => {
+  const { user } = useAuthStore();
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -80,10 +84,29 @@ const ReviewList: React.FC<ReviewListProps> = ({ reviews }) => {
                 {review.comment}
               </p>
               
-              <button className="flex items-center text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                <ThumbsUp size={16} className="mr-1" />
-                <span className="text-sm">Helpful</span>
-              </button>
+              {/* Edit/Delete buttons for user's own feedback */}
+              {user && review.userId === user.id && (
+                <div className="flex space-x-2">
+                  {onEdit && (
+                    <button
+                      onClick={() => onEdit(review)}
+                      className="flex items-center text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    >
+                      <Edit size={16} className="mr-1" />
+                      <span className="text-sm">Edit</span>
+                    </button>
+                  )}
+                  {onDelete && (
+                    <button
+                      onClick={() => onDelete(review.id)}
+                      className="flex items-center text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                    >
+                      <Trash2 size={16} className="mr-1" />
+                      <span className="text-sm">Delete</span>
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </motion.div>

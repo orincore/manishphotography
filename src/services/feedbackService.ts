@@ -14,7 +14,6 @@ export interface Feedback {
 }
 
 export interface CreateFeedbackData {
-  projectId: string;
   rating: number;
   comment: string;
 }
@@ -60,7 +59,7 @@ class FeedbackService {
   // Submit new feedback (User)
   async submitFeedback(feedbackData: CreateFeedbackData): Promise<Feedback> {
     try {
-      const response = await api.post<Feedback>("/feedback/", feedbackData);
+      const response = await api.post<Feedback>("/feedback", feedbackData);
       return response.data;
     } catch (error: any) {
       if (error.response?.status === 400) {

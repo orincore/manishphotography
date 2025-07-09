@@ -17,7 +17,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
-import logoImage from '../../Assets/logo/IMG_0040.JPG';
+// import logoImage from '../../Assets/logo/IMG_0040.JPG';
 
 const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -34,6 +34,7 @@ const AdminLayout = () => {
     { label: 'Dashboard', path: '/admin/dashboard', icon: BarChart3 },
     { label: 'Projects', path: '/admin/projects', icon: Image },
     { label: 'Upload Project', path: '/admin/projects/new', icon: Image },
+    { label: 'Homepage Elements', path: '/admin/homepage', icon: FolderOpen },
     { label: 'Feedback', path: '/admin/feedback', icon: MessageSquare },
     { label: 'Contacts', path: '/admin/contacts', icon: Mail },
     { label: 'Instagram', path: '/admin/instagram', icon: Instagram },
@@ -51,11 +52,9 @@ const AdminLayout = () => {
         {/* Sidebar Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-3 mb-8">
-            <img 
-              src={logoImage} 
-              alt="Manish Photography Logo" 
-              className="h-10 w-10 rounded-full object-cover"
-            />
+            <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center">
+              <Camera size={20} className="text-white" />
+            </div>
             <span className="text-lg font-bold text-white">Admin Panel</span>
           </div>
           <button

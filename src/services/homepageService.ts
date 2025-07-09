@@ -30,6 +30,10 @@ export interface HomepageElement {
     name: string;
     email: string;
   };
+  // Video-specific fields
+  video_autoplay?: boolean;
+  video_muted?: boolean;
+  video_loop?: boolean;
 }
 
 export interface CreateHomepageElementData {
@@ -40,6 +44,10 @@ export interface CreateHomepageElementData {
   order_index?: number;
   is_active?: boolean;
   is_featured?: boolean;
+  // Video-specific fields
+  video_autoplay?: boolean;
+  video_muted?: boolean;
+  video_loop?: boolean;
 }
 
 export interface UpdateHomepageElementData {
@@ -49,6 +57,10 @@ export interface UpdateHomepageElementData {
   order_index?: number;
   is_active?: boolean;
   is_featured?: boolean;
+  // Video-specific fields
+  video_autoplay?: boolean;
+  video_muted?: boolean;
+  video_loop?: boolean;
 }
 
 export interface HomepageStats {
@@ -59,23 +71,52 @@ export interface HomepageStats {
   featuredImages: number;
 }
 
+export interface HomepagePreview {
+  heroElements: HomepageElement[];
+  featuredImages: HomepageElement[];
+  instagramImages: HomepageElement[];
+  aboutImages: HomepageElement[];
+  galleryImages: HomepageElement[];
+  testimonials: HomepageElement[];
+  services: HomepageElement[];
+  contactInfo: HomepageElement[];
+}
+
 class HomepageService {
-  // Get all homepage elements
-  async getAllElements(params?: any): Promise<{ message: string; elements: HomepageElement[]; pagination: any }> {
-    const response = await api.get<{ message: string; elements: HomepageElement[]; pagination: any }>('/homepage/elements', { params });
+  // ===== PUBLIC ENDPOINTS (No Auth Required) =====
+
+  // Get all homepage elements (public)
+  async getAllElements(params?: any): Promise<{ message: string; elements: HomepageElement[]; pagination?: any }> {
+    const response = await api.get<{ message: string; elements: HomepageElement[]; pagination?: any }>('/homepage/elements', { params });
     return response.data;
   }
 
-  // Get homepage elements by type
-  async getElementsByType(type: string): Promise<HomepageElement[]> {
-    const response = await api.get<{ message: string; elements: HomepageElement[] }>(`/homepage/elements/type/${type}`);
-    return response.data.elements;
+  // Get homepage preview (all data at once)
+  async getHomepagePreview(): Promise<HomepagePreview> {
+    try {
+      const response = await api.get<HomepagePreview>('/homepage/preview');
+      return response.data;
+    } catch (error) {
+      // Fallback: get all elements and organize them
+      const allElements = await this.getAllElements();
+      const elements = allElements.elements;
+      
+      return {
+        heroElements: elements.filter(e => (e.type === 'hero' || e.type === 'hero-video') && e.is_active),
+        featuredImages: elements.filter(e => e.type === 'featured' && e.is_active),
+        instagramImages: elements.filter(e => e.type === 'instagram' && e.is_active),
+        aboutImages: elements.filter(e => e.type === 'about' && e.is_active),
+        galleryImages: elements.filter(e => e.type === 'gallery' && e.is_active),
+        testimonials: elements.filter(e => e.type === 'testimonial' && e.is_active),
+        services: elements.filter(e => e.type === 'service' && e.is_active),
+        contactInfo: elements.filter(e => e.type === 'contact' && e.is_active),
+      };
+    }
   }
 
-  // Get active hero elements (images and videos)
+  // Get active hero elements (images + videos)
   async getActiveHeroElements(): Promise<HomepageElement[]> {
     try {
-      // Try the specific hero endpoint first
       const response = await api.get<{ message: string; elements: HomepageElement[] }>('/homepage/hero/active');
       return response.data.elements;
     } catch (error) {
@@ -84,6 +125,20 @@ class HomepageService {
       return allElements.elements.filter(element => 
         (element.type === 'hero' || element.type === 'hero-video') && 
         element.is_active
+      ).sort((a, b) => a.order_index - b.order_index);
+    }
+  }
+
+  // Get hero videos only
+  async getHeroVideos(): Promise<HomepageElement[]> {
+    try {
+      const response = await api.get<{ message: string; elements: HomepageElement[] }>('/homepage/hero/videos');
+      return response.data.elements;
+    } catch (error) {
+      // Fallback: get all elements and filter for hero videos
+      const allElements = await this.getAllElements();
+      return allElements.elements.filter(element => 
+        element.type === 'hero-video' && element.is_active
       ).sort((a, b) => a.order_index - b.order_index);
     }
   }
@@ -97,9 +152,8 @@ class HomepageService {
       // Fallback: get all elements and filter for featured images
       const allElements = await this.getAllElements();
       return allElements.elements.filter(element => 
-        element.is_featured && 
-        (element.media_type === 'image' || element.type.includes('image'))
-      );
+        element.type === 'featured' && element.is_active
+      ).sort((a, b) => a.order_index - b.order_index);
     }
   }
 
@@ -113,9 +167,26 @@ class HomepageService {
       const allElements = await this.getAllElements();
       return allElements.elements.filter(element => 
         element.type === 'instagram' && element.is_active
-      );
+      ).sort((a, b) => a.order_index - b.order_index);
     }
   }
+
+  // Get elements by type with optional active filter
+  async getElementsByType(type: string, activeOnly: boolean = true): Promise<HomepageElement[]> {
+    try {
+      const params = activeOnly ? { active_only: true } : {};
+      const response = await api.get<{ message: string; elements: HomepageElement[] }>(`/homepage/elements/type/${type}`, { params });
+      return response.data.elements;
+    } catch (error) {
+      // Fallback: get all elements and filter
+      const allElements = await this.getAllElements();
+      return allElements.elements.filter(element => 
+        element.type === type && (!activeOnly || element.is_active)
+      ).sort((a, b) => a.order_index - b.order_index);
+    }
+  }
+
+  // ===== ADMIN ENDPOINTS (Auth Required) =====
 
   // Get single homepage element
   async getElement(id: string): Promise<{ message: string; element: HomepageElement }> {
@@ -124,8 +195,8 @@ class HomepageService {
   }
 
   // Create new homepage element
-  async createElement(data: FormData): Promise<{ message: string; element: HomepageElement }> {
-    const response = await api.post<{ message: string; element: HomepageElement }>('/homepage/elements', data, {
+  async createElement(data: FormData): Promise<{ message: string; element: HomepageElement; uploadId?: string }> {
+    const response = await api.post<{ message: string; element: HomepageElement; uploadId?: string }>('/homepage/elements', data, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -185,7 +256,7 @@ class HomepageService {
         activeElements: elements.filter(e => e.is_active).length,
         heroImages: elements.filter(e => e.type === 'hero' && e.media_type === 'image').length,
         heroVideos: elements.filter(e => e.type === 'hero-video' && e.media_type === 'video').length,
-        featuredImages: elements.filter(e => e.is_featured && e.media_type === 'image').length,
+        featuredImages: elements.filter(e => e.type === 'featured' && e.media_type === 'image').length,
       };
     }
   }
@@ -200,33 +271,98 @@ class HomepageService {
     return response.data;
   }
 
-  // Get homepage preview data
-  async getHomepagePreview(): Promise<{
-    heroElements: HomepageElement[];
-    featuredImages: HomepageElement[];
-    instagramImages: HomepageElement[];
-    aboutImages: HomepageElement[];
-  }> {
-    try {
-      const response = await api.get<{
-        heroElements: HomepageElement[];
-        featuredImages: HomepageElement[];
-        instagramImages: HomepageElement[];
-        aboutImages: HomepageElement[];
-      }>('/homepage/preview');
-      return response.data;
-    } catch (error) {
-      // Fallback: get all elements and organize them
-      const allElements = await this.getAllElements();
-      const elements = allElements.elements;
-      
-      return {
-        heroElements: elements.filter(e => (e.type === 'hero' || e.type === 'hero-video') && e.is_active),
-        featuredImages: elements.filter(e => e.is_featured && e.media_type === 'image'),
-        instagramImages: elements.filter(e => e.type === 'instagram' && e.is_active),
-        aboutImages: elements.filter(e => e.type === 'about' && e.is_active),
-      };
-    }
+  // ===== CONVENIENCE METHODS =====
+
+  // Get about section elements
+  async getAboutElements(): Promise<HomepageElement[]> {
+    return this.getElementsByType('about', true);
+  }
+
+  // Get gallery elements
+  async getGalleryElements(): Promise<HomepageElement[]> {
+    return this.getElementsByType('gallery', true);
+  }
+
+  // Get testimonial elements
+  async getTestimonialElements(): Promise<HomepageElement[]> {
+    return this.getElementsByType('testimonial', true);
+  }
+
+  // Get service elements
+  async getServiceElements(): Promise<HomepageElement[]> {
+    return this.getElementsByType('service', true);
+  }
+
+  // Get contact elements
+  async getContactElements(): Promise<HomepageElement[]> {
+    return this.getElementsByType('contact', true);
+  }
+
+  // Create hero image element
+  async createHeroImage(data: {
+    title?: string;
+    subtitle?: string;
+    description?: string;
+    mediaFile: File;
+    isActive?: boolean;
+    isFeatured?: boolean;
+  }): Promise<{ message: string; element: HomepageElement; uploadId?: string }> {
+    const formData = new FormData();
+    formData.append('type', 'hero');
+    if (data.title) formData.append('title', data.title);
+    if (data.subtitle) formData.append('subtitle', data.subtitle);
+    if (data.description) formData.append('description', data.description);
+    formData.append('media_file', data.mediaFile);
+    if (data.isActive !== undefined) formData.append('is_active', data.isActive.toString());
+    if (data.isFeatured !== undefined) formData.append('is_featured', data.isFeatured.toString());
+    
+    return this.createElement(formData);
+  }
+
+  // Create hero video element
+  async createHeroVideo(data: {
+    title?: string;
+    subtitle?: string;
+    description?: string;
+    mediaFile: File;
+    isActive?: boolean;
+    isFeatured?: boolean;
+    videoAutoplay?: boolean;
+    videoMuted?: boolean;
+    videoLoop?: boolean;
+  }): Promise<{ message: string; element: HomepageElement; uploadId?: string }> {
+    const formData = new FormData();
+    formData.append('type', 'hero-video');
+    if (data.title) formData.append('title', data.title);
+    if (data.subtitle) formData.append('subtitle', data.subtitle);
+    if (data.description) formData.append('description', data.description);
+    formData.append('media_file', data.mediaFile);
+    if (data.isActive !== undefined) formData.append('is_active', data.isActive.toString());
+    if (data.isFeatured !== undefined) formData.append('is_featured', data.isFeatured.toString());
+    if (data.videoAutoplay !== undefined) formData.append('video_autoplay', data.videoAutoplay.toString());
+    if (data.videoMuted !== undefined) formData.append('video_muted', data.videoMuted.toString());
+    if (data.videoLoop !== undefined) formData.append('video_loop', data.videoLoop.toString());
+    
+    return this.createElement(formData);
+  }
+
+  // Create testimonial element
+  async createTestimonial(data: {
+    title: string;
+    subtitle?: string;
+    description: string;
+    isActive?: boolean;
+    isFeatured?: boolean;
+  }): Promise<{ message: string; element: HomepageElement; uploadId?: string }> {
+    const formData = new FormData();
+    formData.append('type', 'testimonial');
+    formData.append('title', data.title);
+    if (data.subtitle) formData.append('subtitle', data.subtitle);
+    formData.append('description', data.description);
+    if (data.isActive !== undefined) formData.append('is_active', data.isActive.toString());
+    if (data.isFeatured !== undefined) formData.append('is_featured', data.isFeatured.toString());
+    
+    return this.createElement(formData);
   }
 }
 

@@ -144,50 +144,7 @@ const About = () => {
         </div>
       </Section>
 
-      {/* Behind the Scenes */}
-      <Section title="Behind the Scenes" subtitle="A glimpse into our creative process" darkBg>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="overflow-hidden rounded-lg shadow-lg"
-          >
-            <img 
-              src="https://images.pexels.com/photos/7146382/pexels-photo-7146382.jpeg" 
-              alt="Behind the scenes 1" 
-              className="w-full h-64 object-cover"
-            />
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="overflow-hidden rounded-lg shadow-lg"
-          >
-            <img 
-              src="https://images.pexels.com/photos/3379934/pexels-photo-3379934.jpeg" 
-              alt="Behind the scenes 2" 
-              className="w-full h-64 object-cover"
-            />
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="overflow-hidden rounded-lg shadow-lg"
-          >
-            <img 
-              src="https://images.pexels.com/photos/3586032/pexels-photo-3586032.jpeg" 
-              alt="Behind the scenes 3" 
-              className="w-full h-64 object-cover"
-            />
-          </motion.div>
-        </div>
-      </Section>
+
     </div>
   );
 };

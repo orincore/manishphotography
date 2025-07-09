@@ -59,7 +59,6 @@ const Footer = () => {
                 { label: 'Home', path: '/' },
                 { label: 'Portfolio', path: '/portfolio' },
                 { label: 'About', path: '/about' },
-                { label: 'Blog', path: '/blog' },
                 { label: 'Contact', path: '/contact' },
                 { label: 'Cost Estimator', path: '/cost-estimator' },
               ].map((link) => (
@@ -104,19 +103,21 @@ const Footer = () => {
               <li className="flex items-start space-x-3">
                 <MapPin size={20} className="text-blue-400 mt-1 flex-shrink-0" />
                 <span className="text-gray-400">
-                  123 Photography Lane<br />New York, NY 10001
+                  Yadav Nagar, Shirgaon<br />
+                  Badlapur East, Maharashtra<br />
+                  India 421-503
                 </span>
               </li>
               <li className="flex items-center space-x-3">
                 <Phone size={20} className="text-blue-400 flex-shrink-0" />
-                <a href="tel:+12345678900" className="text-gray-400 hover:text-white transition-colors">
-                  +1 (234) 567-8900
+                <a href="tel:+91901180848" className="text-gray-400 hover:text-white transition-colors">
+                  +91 901180848
                 </a>
               </li>
               <li className="flex items-center space-x-3">
                 <Mail size={20} className="text-blue-400 flex-shrink-0" />
-                <a href="mailto:info@manishphotography.com" className="text-gray-400 hover:text-white transition-colors">
-                  info@manishphotography.com
+                <a href="mailto:manishbose94@gmail.com" className="text-gray-400 hover:text-white transition-colors">
+                  manishbose94@gmail.com
                 </a>
               </li>
             </ul>

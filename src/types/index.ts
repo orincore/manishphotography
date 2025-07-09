@@ -45,22 +45,7 @@ export interface OfferItem {
   expiryDate?: string;
 }
 
-export interface BlogPost {
-  id: string;
-  title: string;
-  slug: string;
-  excerpt: string;
-  content: string;
-  coverImage: string;
-  author: {
-    name: string;
-    avatar?: string;
-  };
-  date: string;
-  readTime: string;
-  tags?: string[];
-  featured?: boolean;
-}
+
 
 export interface User {
   id: string;

@@ -1,18 +1,22 @@
 import api from './api';
 
-export interface ContactMessage {
+export interface ContactSubmission {
   id: string;
   name: string;
   email: string;
+  phone?: string;
+  location?: string;
   message: string;
-  read: boolean;
-  createdAt: string;
-  updatedAt: string;
+  is_read: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface CreateContactData {
   name: string;
   email: string;
+  phone?: string;
+  location?: string;
   message: string;
 }
 
