@@ -1,15 +1,15 @@
 import { create } from 'zustand';
-import { users } from '../data/users';
-import { User } from '../types';
+import authService, { LoginData, RegisterData, UserProfile } from '../services/authService';
 
 interface AuthState {
-  user: User | null;
+  user: UserProfile | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (userData: Omit<User, 'id' | 'role' | 'createdAt'>) => Promise<void>;
+  register: (userData: RegisterData) => Promise<void>;
   logout: () => void;
+  checkAuth: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -22,74 +22,76 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true, error: null });
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const loginData: LoginData = { email, password };
+      const response = await authService.login(loginData);
       
-      const user = users.find(u => u.email === email);
+      // Store token
+      authService.setToken(response.token);
       
-      if (user && password === 'password') { // Mock password check
-        set({ 
-          user, 
-          isAuthenticated: true, 
-          isLoading: false 
-        });
-      } else {
-        set({ 
-          error: 'Invalid email or password', 
-          isLoading: false 
-        });
-      }
-    } catch (error) {
       set({ 
-        error: 'An error occurred during login', 
+        user: response.user, 
+        isAuthenticated: true, 
+        isLoading: false 
+      });
+    } catch (error: any) {
+      set({ 
+        error: error.response?.data?.message || 'An error occurred during login', 
         isLoading: false 
       });
     }
   },
   
-  register: async (userData) => {
+  register: async (userData: RegisterData) => {
     set({ isLoading: true, error: null });
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await authService.register(userData);
       
-      const existingUser = users.find(u => u.email === userData.email);
+      // Store token
+      authService.setToken(response.token);
       
-      if (existingUser) {
-        set({ 
-          error: 'User with this email already exists', 
-          isLoading: false 
-        });
-        return;
-      }
-      
-      const newUser: User = {
-        ...userData,
-        id: `${users.length + 1}`,
-        role: 'user',
-        createdAt: new Date().toISOString(),
-      };
-      
-      // In a real app, we would add the user to the database
-      // For now, just set the user as logged in
       set({ 
-        user: newUser, 
+        user: response.user, 
         isAuthenticated: true, 
         isLoading: false 
       });
-    } catch (error) {
+    } catch (error: any) {
       set({ 
-        error: 'An error occurred during registration', 
+        error: error.response?.data?.message || 'An error occurred during registration', 
         isLoading: false 
       });
     }
   },
   
   logout: () => {
+    authService.removeToken();
     set({ 
       user: null, 
       isAuthenticated: false 
     });
+  },
+
+  checkAuth: async () => {
+    if (!authService.isAuthenticated()) {
+      return;
+    }
+
+    set({ isLoading: true });
+    
+    try {
+      const user = await authService.getProfile();
+      set({ 
+        user, 
+        isAuthenticated: true, 
+        isLoading: false 
+      });
+    } catch (error: any) {
+      authService.removeToken();
+      set({ 
+        user: null, 
+        isAuthenticated: false, 
+        isLoading: false 
+      });
+    }
   },
 }));

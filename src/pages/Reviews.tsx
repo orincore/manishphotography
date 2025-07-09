@@ -2,39 +2,98 @@ import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '../store/useAuthStore';
-import { reviews as initialReviews } from '../data/reviews';
 import { Review } from '../types';
 import Section from '../components/common/Section';
 import ReviewForm from '../components/reviews/ReviewForm';
 import ReviewList from '../components/reviews/ReviewList';
+import feedbackService from '../services/feedbackService';
 
 const Reviews = () => {
   const { isAuthenticated, user } = useAuthStore();
-  const [reviews, setReviews] = useState<Review[]>(initialReviews);
-  
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [duplicateFeedback, setDuplicateFeedback] = useState<any | null>(null);
+
   useEffect(() => {
-    // Update page title
     document.title = 'Reviews - Manish Photography';
+    fetchReviews();
   }, []);
 
-  const handleSubmitReview = (reviewData: {
+  const fetchReviews = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Fetch approved feedback from API (new response structure)
+      const response = await feedbackService.getApprovedFeedback();
+      const feedbackArr = response.feedback || [];
+      const mappedReviews: Review[] = feedbackArr.map((fb: any) => ({
+        id: fb.id,
+        userId: fb.user_id,
+        userName: fb.users?.name || 'Anonymous',
+        userAvatar: undefined, // Not provided in API response
+        rating: fb.rating,
+        comment: fb.comment,
+        serviceType: 'wedding', // Not provided, fallback
+        createdAt: fb.created_at,
+      }));
+      setReviews(mappedReviews);
+    } catch (err) {
+      setError('Failed to load reviews.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmitReview = async (reviewData: {
     rating: number;
     comment: string;
     serviceType: 'wedding' | 'pre-wedding' | 'event' | 'commercial';
   }) => {
     if (!user) return;
-    
-    const newReview: Review = {
-      id: (reviews.length + 1).toString(),
-      userId: user.id,
-      userName: `${user.firstName} ${user.lastName}`,
-      rating: reviewData.rating,
-      comment: reviewData.comment,
-      serviceType: reviewData.serviceType,
-      createdAt: new Date().toISOString(),
-    };
-    
-    setReviews([newReview, ...reviews]);
+    setError(null);
+    setDuplicateFeedback(null);
+    try {
+      // Submit feedback to API
+      await feedbackService.submitFeedback({
+        rating: reviewData.rating,
+        comment: reviewData.comment,
+        projectId: '', // If you have a project context, pass the projectId here
+      });
+      // Refresh reviews after submission
+      fetchReviews();
+    } catch (err: any) {
+      // Check for duplicate feedback error
+      if (err?.response?.data?.error?.code === 'FEEDBACK_EXISTS') {
+        setDuplicateFeedback(err.response.data.error);
+        setError(null);
+      } else {
+        // Display exact error message from API
+        const errorMessage = err?.response?.data?.error?.message || 
+                           err?.response?.data?.message || 
+                           err?.response?.data?.error || 
+                           err?.message || 
+                           'Failed to submit review.';
+        setError(errorMessage);
+      }
+    }
+  };
+
+  const handleEditFeedback = () => {
+    // Optionally, open an edit form/modal for the existing feedback
+    // For now, just show a message
+    alert('Edit feedback feature coming soon!');
+  };
+
+  const handleDeleteFeedback = async () => {
+    if (!duplicateFeedback?.existingFeedback?.id) return;
+    try {
+      await feedbackService.deleteOwnFeedback(duplicateFeedback.existingFeedback.id);
+      setDuplicateFeedback(null);
+      fetchReviews();
+    } catch {
+      setError('Failed to delete your existing feedback.');
+    }
   };
 
   if (!isAuthenticated) {
@@ -52,9 +111,39 @@ const Reviews = () => {
             className="mb-12"
           >
             <ReviewForm onSubmit={handleSubmitReview} />
+            {error && <p className="text-red-500 mt-4">{error}</p>}
+            {duplicateFeedback && (
+              <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-4 rounded">
+                <div className="font-semibold mb-2">You have already submitted feedback.</div>
+                <div className="mb-2">You can edit or delete your existing feedback below:</div>
+                <div className="mb-2">
+                  <span className="font-medium">Rating:</span> {duplicateFeedback.existingFeedback.rating} <br />
+                  <span className="font-medium">Comment:</span> {duplicateFeedback.existingFeedback.comment}
+                </div>
+                <div className="flex gap-2 mt-2">
+                  <button
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                    onClick={handleEditFeedback}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                    onClick={handleDeleteFeedback}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            )}
           </motion.div>
-          
-          <ReviewList reviews={reviews} />
+          {loading ? (
+            <div className="flex items-center justify-center h-32">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : (
+            <ReviewList reviews={reviews} />
+          )}
         </div>
       </Section>
     </div>

@@ -53,27 +53,11 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ onSubmit }) => {
         <p className="text-red-500 mb-4">{error}</p>
       )}
       
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Service Type
+      <div className="mb-8">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4 text-center">
+          Rate your experience
         </label>
-        <select
-          value={serviceType}
-          onChange={(e) => setServiceType(e.target.value as any)}
-          className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-        >
-          <option value="wedding">Wedding Photography</option>
-          <option value="pre-wedding">Pre-Wedding Shoot</option>
-          <option value="event">Event Coverage</option>
-          <option value="commercial">Commercial Photography</option>
-        </select>
-      </div>
-      
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Rating
-        </label>
-        <div className="flex space-x-1">
+        <div className="flex justify-center space-x-3">
           {[1, 2, 3, 4, 5].map((star) => (
             <button
               key={star}
@@ -81,19 +65,24 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ onSubmit }) => {
               onClick={() => setRating(star)}
               onMouseEnter={() => setHoverRating(star)}
               onMouseLeave={() => setHoverRating(0)}
-              className="focus:outline-none"
+              className="focus:outline-none transform hover:scale-110 transition-transform duration-200"
             >
               <Star
-                size={24}
+                size={40}
                 className={`${
                   star <= (hoverRating || rating)
-                    ? 'text-yellow-400 fill-yellow-400'
-                    : 'text-gray-300 dark:text-gray-600'
-                } transition-colors`}
+                    ? 'text-yellow-500 fill-yellow-500 drop-shadow-sm'
+                    : 'text-gray-300 dark:text-gray-600 hover:text-yellow-300'
+                } transition-all duration-200`}
               />
             </button>
           ))}
         </div>
+        {rating > 0 && (
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-3 text-center">
+            You rated: {rating} star{rating > 1 ? 's' : ''}
+          </p>
+        )}
       </div>
       
       <div className="mb-6">

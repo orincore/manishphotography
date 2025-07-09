@@ -6,20 +6,18 @@ import { useAuthStore } from '../../store/useAuthStore';
 import Button from '../common/Button';
 
 interface RegisterFormData {
-  firstName: string;
-  lastName: string;
+  name: string;
   email: string;
-  phoneNumber: string;
+  phone: string;
   password: string;
   confirmPassword: string;
 }
 
 const RegisterForm = () => {
   const [formData, setFormData] = useState<RegisterFormData>({
-    firstName: '',
-    lastName: '',
+    name: '',
     email: '',
-    phoneNumber: '',
+    phone: '',
     password: '',
     confirmPassword: '',
   });
@@ -42,12 +40,8 @@ const RegisterForm = () => {
   const validateForm = (): boolean => {
     const newErrors: Partial<RegisterFormData> = {};
     
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = 'First name is required';
-    }
-    
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = 'Last name is required';
+    if (!formData.name.trim()) {
+      newErrors.name = 'Name is required';
     }
     
     if (!formData.email.trim()) {
@@ -56,8 +50,8 @@ const RegisterForm = () => {
       newErrors.email = 'Invalid email address';
     }
     
-    if (!formData.phoneNumber.trim()) {
-      newErrors.phoneNumber = 'Phone number is required';
+    if (!formData.phone.trim()) {
+      newErrors.phone = 'Phone number is required';
     }
     
     if (!formData.password) {
@@ -109,46 +103,24 @@ const RegisterForm = () => {
             </div>
           )}
           
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div>
-              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                First Name
-              </label>
-              <input
-                type="text"
-                id="firstName"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleChange}
-                className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
-                  errors.firstName ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="John"
-              />
-              {errors.firstName && (
-                <p className="mt-1 text-sm text-red-500">{errors.firstName}</p>
-              )}
-            </div>
-            
-            <div>
-              <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Last Name
-              </label>
-              <input
-                type="text"
-                id="lastName"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-                className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
-                  errors.lastName ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="Doe"
-              />
-              {errors.lastName && (
-                <p className="mt-1 text-sm text-red-500">{errors.lastName}</p>
-              )}
-            </div>
+          <div className="mb-4">
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Full Name
+            </label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
+                errors.name ? 'border-red-500' : 'border-gray-300'
+              }`}
+              placeholder="John Doe"
+            />
+            {errors.name && (
+              <p className="mt-1 text-sm text-red-500">{errors.name}</p>
+            )}
           </div>
           
           <div className="mb-4">
@@ -172,22 +144,22 @@ const RegisterForm = () => {
           </div>
           
           <div className="mb-4">
-            <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Phone Number
             </label>
             <input
               type="tel"
-              id="phoneNumber"
-              name="phoneNumber"
-              value={formData.phoneNumber}
+              id="phone"
+              name="phone"
+              value={formData.phone}
               onChange={handleChange}
               className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
-                errors.phoneNumber ? 'border-red-500' : 'border-gray-300'
+                errors.phone ? 'border-red-500' : 'border-gray-300'
               }`}
               placeholder="(123) 456-7890"
             />
-            {errors.phoneNumber && (
-              <p className="mt-1 text-sm text-red-500">{errors.phoneNumber}</p>
+            {errors.phone && (
+              <p className="mt-1 text-sm text-red-500">{errors.phone}</p>
             )}
           </div>
           

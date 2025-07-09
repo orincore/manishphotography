@@ -2,31 +2,31 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Send } from 'lucide-react';
 import Button from '../common/Button';
-import { ContactFormData } from '../../types';
+import contactService, { CreateContactData } from '../../services/contactService';
 
 const ContactForm = () => {
-  const [formData, setFormData] = useState<ContactFormData>({
+  const [formData, setFormData] = useState<CreateContactData>({
     name: '',
     email: '',
-    phone: '',
     message: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [errors, setErrors] = useState<Partial<ContactFormData>>({});
+  const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Partial<CreateContactData>>({});
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev: CreateContactData) => ({ ...prev, [name]: value }));
     
     // Clear error for this field
-    if (errors[name as keyof ContactFormData]) {
-      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    if (errors[name as keyof CreateContactData]) {
+      setErrors((prev: Partial<CreateContactData>) => ({ ...prev, [name]: undefined }));
     }
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<ContactFormData> = {};
+    const newErrors: Partial<CreateContactData> = {};
     
     if (!formData.name.trim()) {
       newErrors.name = 'Name is required';
@@ -36,10 +36,6 @@ const ContactForm = () => {
       newErrors.email = 'Email is required';
     } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(formData.email)) {
       newErrors.email = 'Invalid email address';
-    }
-    
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required';
     }
     
     if (!formData.message.trim()) {
@@ -58,20 +54,19 @@ const ContactForm = () => {
     }
     
     setIsSubmitting(true);
+    setError(null);
     
-    // Simulate API call
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await contactService.submitContact(formData);
       
       setIsSubmitted(true);
       setFormData({
         name: '',
         email: '',
-        phone: '',
         message: '',
       });
-    } catch (error) {
-      console.error('Error submitting form:', error);
+    } catch (error: any) {
+      setError(error.response?.data?.message || 'An error occurred while submitting the form');
     } finally {
       setIsSubmitting(false);
     }
@@ -118,6 +113,12 @@ const ContactForm = () => {
             Get in Touch
           </h2>
           
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md dark:bg-red-900/50 dark:text-red-300">
+              {error}
+            </div>
+          )}
+          
           <div className="mb-6">
             <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Your Name*
@@ -158,25 +159,7 @@ const ContactForm = () => {
             )}
           </div>
           
-          <div className="mb-6">
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Phone Number*
-            </label>
-            <input
-              type="tel"
-              id="phone"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${
-                errors.phone ? 'border-red-500' : 'border-gray-300'
-              }`}
-              placeholder="(123) 456-7890"
-            />
-            {errors.phone && (
-              <p className="mt-1 text-sm text-red-500">{errors.phone}</p>
-            )}
-          </div>
+
           
           <div className="mb-6">
             <label htmlFor="message" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">

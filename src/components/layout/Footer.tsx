@@ -1,5 +1,6 @@
+import { Instagram, Facebook, Twitter, Mail, Phone, MapPin, Lock } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Camera, Instagram, Facebook, Twitter, Mail, Phone, MapPin, Lock } from 'lucide-react';
+import logoImage from '../../Assets/logo/IMG_0040.JPG';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -10,8 +11,12 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div>
             <Link to="/" className="flex items-center space-x-2 mb-4">
-              <Camera className="h-8 w-8 text-blue-400" />
-              <span className="text-xl font-bold">Manish Photography</span>
+              <img 
+                src={logoImage} 
+                alt="Manish Photography Logo" 
+                className="h-12 w-12 rounded-full object-cover"
+              />
+              <span className="text-xl font-bold text-white">Manish Photography</span>
             </Link>
             <p className="text-gray-400 mb-6">
               Capturing life's beautiful moments through the art of photography and cinematography.

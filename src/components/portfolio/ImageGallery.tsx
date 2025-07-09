@@ -1,115 +1,129 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
-import { ImageItem } from '../../types';
+import React, { useEffect, useState } from 'react';
+import { fetchPublishedProjects, fetchCategoryById, fetchCategoryBySnug } from '../../services/portfolioService';
 
-interface ImageGalleryProps {
-  images: ImageItem[];
+interface Project {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  tags: string[];
+  image_url: string | null;
+  thumbnail_url: string | null;
+  is_published: boolean;
+  created_at: string;
+  snug?: string;
+  portfolio_subcategories?: any;
+  images?: { thumbnail_url: string | null; image_url: string | null }[];
 }
 
-const ImageGallery: React.FC<ImageGalleryProps> = ({ images }) => {
-  const [selectedImage, setSelectedImage] = useState<ImageItem | null>(null);
+interface ImageGalleryProps {
+  categorySnug?: string;
+}
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
-  
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.5,
-      },
-    },
-  };
+const ImageGallery: React.FC<ImageGalleryProps> = ({ categorySnug }) => {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [categoryName, setCategoryName] = useState<string>('');
+  const [categoryMap, setCategoryMap] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
 
-  const openLightbox = (image: ImageItem) => {
-    setSelectedImage(image);
-    document.body.style.overflow = 'hidden';
-  };
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      if (categorySnug) {
+        // Fetch projects for a specific category snug
+        const response = await fetchCategoryBySnug(categorySnug);
+        // response: { message, snug, projects } or { category, projects }
+        let catName = categorySnug;
+        let projs: Project[] = [];
+        if ('category' in response && response.category) {
+          catName = response.category.name || categorySnug;
+          projs = response.projects || [];
+        } else if ('name' in response) {
+          catName = response.name || categorySnug;
+          projs = response.projects || [];
+        } else if ('projects' in response) {
+          projs = response.projects;
+        }
+        setCategoryName(catName);
+        setProjects(projs);
+        setCategoryMap({ [categorySnug]: catName });
+      } else {
+        // Fetch all published projects
+        const projs = await fetchPublishedProjects(1, 10);
+        setProjects(projs);
+        // Map category IDs/snugs to names
+        const uniqueCategoryKeys = Array.from(new Set(projs.map((p: Project) => String(p.category)).filter(Boolean)));
+        const catMap: Record<string, string> = {};
+        await Promise.all(uniqueCategoryKeys.map(async (catKey) => {
+          if (typeof catKey === 'string' && catKey && !catMap[catKey]) {
+            try {
+              const cat = await fetchCategoryById(catKey);
+              if (cat && cat.name) {
+                catMap[catKey] = cat.name;
+              } else if (cat && cat.category && cat.category.name) {
+                catMap[catKey] = cat.category.name;
+              } else {
+                catMap[catKey] = catKey;
+              }
+            } catch {
+              catMap[catKey] = catKey;
+            }
+          }
+        }));
+        setCategoryMap(catMap);
+      }
+      setLoading(false);
+    };
+    fetchData();
+  }, [categorySnug]);
 
-  const closeLightbox = () => {
-    setSelectedImage(null);
-    document.body.style.overflow = 'auto';
-  };
+  if (loading) {
+    return <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>;
+  }
 
   return (
-    <>
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-      >
-        {images.map((image) => (
-          <motion.div
-            key={image.id}
-            variants={itemVariants}
-            className="overflow-hidden rounded-lg cursor-pointer"
-            onClick={() => openLightbox(image)}
-          >
-            <div className="aspect-[4/3] overflow-hidden">
-              <img
-                src={image.src}
-                alt={image.title}
-                className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-              />
-            </div>
-            <div className="p-4 bg-white dark:bg-gray-800">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{image.title}</h3>
-              <p className="text-gray-600 dark:text-gray-300 mt-1">{image.description}</p>
-            </div>
-          </motion.div>
-        ))}
-      </motion.div>
-
-      <AnimatePresence>
-        {selectedImage && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 p-4"
-            onClick={closeLightbox}
-          >
-            <button
-              className="absolute top-6 right-6 text-white hover:text-gray-300 transition-colors z-10"
-              onClick={closeLightbox}
-            >
-              <X size={32} />
-            </button>
-            
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="relative max-w-5xl max-h-[90vh]"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <img
-                src={selectedImage.src}
-                alt={selectedImage.title}
-                className="max-w-full max-h-[80vh] object-contain"
-              />
-              <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-4">
-                <h3 className="text-xl font-semibold">{selectedImage.title}</h3>
-                <p className="text-gray-300 mt-1">{selectedImage.description}</p>
+    <div>
+      {categorySnug && (
+        <h2 className="text-2xl font-bold mb-6">Category: {categoryName}</h2>
+      )}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {projects.map((project) => {
+          let catKey = project.category;
+          let catDisplay = categoryMap[catKey] || catKey;
+          if (categorySnug) catDisplay = categoryName;
+          // Use images array if present, otherwise fallback
+          const images = Array.isArray(project.images) && project.images.length > 0
+            ? project.images.map(img => img.thumbnail_url || img.image_url || '/placeholder.jpg')
+            : [project.thumbnail_url || project.image_url || '/placeholder.jpg'];
+          return (
+            <div key={project.id} className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+              <div className="flex gap-2 overflow-x-auto pb-2">
+                {images.map((imgUrl, idx) => (
+                  <img
+                    key={(imgUrl || '/placeholder.jpg') + idx}
+                    src={imgUrl || '/placeholder.jpg'}
+                    alt={project.title}
+                    className="w-32 h-32 object-cover rounded mb-3 border border-gray-200 dark:border-gray-700 flex-shrink-0"
+                  />
+                ))}
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
+              <h3 className="text-lg font-bold mb-1">{project.title}</h3>
+              <p className="text-gray-600 dark:text-gray-300 mb-2">{project.description}</p>
+              <div className="text-sm text-gray-500 mb-1">
+                <span className="font-medium">Category:</span> {catDisplay}
+              </div>
+              {project.tags && project.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {project.tags.map((tag) => (
+                    <span key={tag} className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">{tag}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 };
 
