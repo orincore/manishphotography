@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useUploadProgress } from '../../hooks/useUploadProgress';
 import UploadProgress from '../common/UploadProgress';
 import homepageService from '../../services/homepageService';
-import notify from '../../utils/notifications';
+import { showSuccessNotification, showErrorNotification, showInfoNotification } from '../../utils/notifications';
 
 const ProgressTrackingDemo: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -20,7 +20,7 @@ const ProgressTrackingDemo: React.FC = () => {
 
   const handleUpload = async () => {
     if (!selectedFile) {
-      notify.error('Please select a file first');
+      showErrorNotification('Please select a file first');
       return;
     }
 
@@ -46,28 +46,28 @@ const ProgressTrackingDemo: React.FC = () => {
       if (result.uploadId) {
         setCurrentUploadId(result.uploadId);
         startTracking(result.uploadId);
-        notify.success('Upload started! Watch the progress in real-time.');
+        showSuccessNotification('Upload started! Watch the progress in real-time.');
       } else {
         // No progress tracking, handle as regular upload
-        notify.success('Element created successfully (no progress tracking)');
+        showSuccessNotification('Element created successfully (no progress tracking)');
         setUploading(false);
       }
     } catch (error) {
       console.error('Error creating element:', error);
-      notify.error('Failed to create element');
+      showErrorNotification('Failed to create element');
       setUploading(false);
     }
   };
 
   const handleUploadComplete = (element: any) => {
-    notify.success('Upload completed successfully!');
+    showSuccessNotification('Upload completed successfully!');
     setUploading(false);
     setCurrentUploadId(null);
     setSelectedFile(null);
   };
 
   const handleUploadError = (errorMessage: string) => {
-    notify.error(`Upload failed: ${errorMessage}`);
+    showErrorNotification(`Upload failed: ${errorMessage}`);
     setUploading(false);
     setCurrentUploadId(null);
   };
@@ -76,7 +76,7 @@ const ProgressTrackingDemo: React.FC = () => {
     stopTracking();
     setUploading(false);
     setCurrentUploadId(null);
-    notify.info('Upload cancelled');
+    showInfoNotification('Upload cancelled');
   };
 
   return (

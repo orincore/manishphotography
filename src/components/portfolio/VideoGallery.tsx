@@ -43,16 +43,23 @@ const VideoGallery: React.FC<VideoGalleryProps> = ({ videos }) => {
         <motion.div
           key={video.id}
           variants={itemVariants}
-          className="overflow-hidden rounded-lg cursor-pointer"
+          className="overflow-hidden rounded-lg cursor-pointer group bg-white dark:bg-gray-800 shadow-md hover:shadow-xl transition-shadow"
           onClick={() => handleVideoClick(video.videoUrl)}
         >
           <div className="relative aspect-video overflow-hidden">
-            <img
-              src={video.thumbnail}
-              alt={video.title}
-              className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+            <video
+              src={video.videoUrl}
+              poster={video.thumbnail}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              controls={false}
+              onMouseOver={e => e.currentTarget.play()}
+              onMouseOut={e => { e.currentTarget.pause(); e.currentTarget.currentTime = 0; }}
             />
-            <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center pointer-events-none">
               <motion.div
                 whileHover={{ scale: 1.1 }}
                 className="rounded-full bg-white/80 p-4"

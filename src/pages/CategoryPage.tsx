@@ -1,18 +1,17 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Section from '../components/common/Section';
-import portfolioService, { PortfolioCategory } from '../services/portfolioService';
 import { formatProjectCount } from '../utils/portfolioHelpers';
-import { useState as useReactState } from 'react';
 
 const CategoryPage = () => {
   const { categorySlug } = useParams();
-  const [category, setCategory] = useState<PortfolioCategory | null>(null);
+  const navigate = useNavigate();
+  const [category, setCategory] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [projects, setProjects] = useState<any[]>([]);
-  const [fullscreenImage, setFullscreenImage] = useReactState<string | null>(null);
+  const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
 
   useEffect(() => {
     // Update page title
@@ -22,45 +21,46 @@ const CategoryPage = () => {
   }, [category]);
 
   useEffect(() => {
-    const fetchCategory = async () => {
+    const fetchCategoryProjects = async () => {
       try {
         setLoading(true);
         setError(null);
-        
-        const response = await portfolioService.getCategoryBySlug(categorySlug!);
-        if ('category' in response && response.category) {
-          setCategory(response.category);
-          setProjects([]);
-        } else if ('snug' in response && 'projects' in response) {
-          // Fallback: create a minimal category object
-          setCategory({
-            id: '',
-            name: String(response.snug),
-            slug: String(response.snug),
-            description: '',
-            portfolio_subcategories: [],
-            thumbnail_url: '',
-            is_active: true,
-            display_order: 0,
-            created_at: '',
-            updated_at: ''
-          });
-          setProjects(Array.isArray(response.projects) ? response.projects : []);
+        setCategory(null);
+        setProjects([]);
+        // Use the correct endpoint for a single category
+        const response = await fetch(`http://localhost:3000/api/portfolio/categories/${categorySlug}`);
+        if (!response.ok) throw new Error('Category not found or no images available');
+        const data = await response.json();
+        // The API returns { message, snug, projects }
+        if (data && Array.isArray(data.projects)) {
+          if (data.projects.length > 0) {
+            setCategory({
+              id: '',
+              name: categorySlug,
+              slug: categorySlug,
+              description: '',
+              portfolio_subcategories: [],
+              thumbnail_url: '',
+              is_active: true,
+              display_order: 0,
+              created_at: '',
+              updated_at: ''
+            });
+            setProjects(data.projects);
+          } else {
+            setError('No projects found for this category');
+          }
         } else {
           setError('Category not found or no images available');
-          setProjects([]);
         }
       } catch (err: any) {
-        console.error('Error fetching category:', err);
         setError('Category not found or no images available');
-        setProjects([]);
       } finally {
         setLoading(false);
       }
     };
-
     if (categorySlug) {
-      fetchCategory();
+      fetchCategoryProjects();
     }
   }, [categorySlug]);
 
@@ -86,12 +86,13 @@ const CategoryPage = () => {
   };
 
   const handleEditImage = (project: any, img: any) => {
-    // TODO: Implement edit logic (e.g., navigate to edit page or open modal)
-    alert(`Edit image for project: ${project.title}`);
+    // TODO: Implement edit functionality
+    console.log('Edit image:', project, img);
   };
+
   const handleDeleteImage = (project: any, img: any) => {
-    // TODO: Implement delete logic (e.g., API call, confirmation)
-    alert(`Delete image for project: ${project.title}`);
+    // TODO: Implement delete functionality
+    console.log('Delete image:', project, img);
   };
 
   if (loading) {
@@ -107,7 +108,10 @@ const CategoryPage = () => {
     );
   }
 
-  if (error || !category) {
+  if (
+    error ||
+    !category
+  ) {
     return (
       <div className="min-h-screen pt-24 pb-16">
         <Section title="Category Not Found" subtitle="">
@@ -122,7 +126,7 @@ const CategoryPage = () => {
                 Category Not Found
               </h3>
               <p className="text-gray-600 dark:text-gray-400 mb-4">
-                {error || 'The category you are looking for does not exist.'}
+                {error || 'The category you are looking for does not exist or has no content.'}
               </p>
               <Link 
                 to="/portfolio"
@@ -137,6 +141,10 @@ const CategoryPage = () => {
     );
   }
 
+  // If you are rendering a list of categories, filter them before rendering:
+  // Example: categories.filter(cat => Array.isArray(cat.portfolio_subcategories) && cat.portfolio_subcategories.length > 0)
+  // If you are rendering a single category (as in this page), the previous logic is correct.
+  // If you have a categories list page, apply this filter before mapping over categories.
   return (
     <div className="min-h-screen pb-16">
       <Section subtitle={category.description}>
@@ -166,102 +174,75 @@ const CategoryPage = () => {
           </div>
 
           {/* Subcategories Section */}
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 text-center">
-              Client Portfolios
-            </h2>
-            {category.portfolio_subcategories.length > 0 && (
-              <motion.div
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-              >
-                {category.portfolio_subcategories.map((subcategory) => (
-                  <motion.div key={subcategory.id} variants={itemVariants}>
-                    <Link to={`/portfolio/${category.slug}/${subcategory.slug}`}>
-                      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                        <div className="aspect-[4/3] overflow-hidden">
-                          <img
-                            src={subcategory.cover_image_url || category.thumbnail_url || 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400&h=300&fit=crop'}
-                            alt={subcategory.name}
-                            className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src = 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400&h=300&fit=crop';
-                            }}
-                          />
-                        </div>
-                        <div className="p-6">
-                          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                            {subcategory.name}
-                          </h3>
-                          {subcategory.description && (
-                            <p className="text-gray-600 dark:text-gray-400 mb-2">
-                              {subcategory.description}
-                            </p>
-                          )}
-                          <p className="text-gray-600 dark:text-gray-400 mb-2">
-                            {subcategory.client_name}
-                          </p>
-                          <div className="flex justify-between items-center text-sm text-gray-500 dark:text-gray-500">
-                            <span>{formatProjectCount(subcategory)}</span>
-                            {subcategory.event_date && (
-                              <span>{new Date(subcategory.event_date).toLocaleDateString()}</span>
-                            )}
-                          </div>
-                          <div className="mt-4">
-                            <span className="inline-block w-full text-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                              View Gallery
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                  </motion.div>
-                ))}
-              </motion.div>
-            )}
-          </div>
-
+          {/* (Removed: category.portfolio_subcategories && category.portfolio_subcategories.length > 0) */}
           {/* Projects Grid Section */}
           {projects.length > 0 && (
             <div className="mb-12">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 text-center">
+                Gallery
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {projects.flatMap((project) => (
-                  Array.isArray(project.images) && project.images.length > 0
+                {projects.flatMap((project) => [
+                  // Images
+                  ...(Array.isArray(project.images) && project.images.length > 0
                     ? project.images.map((img: any, idx: number) => (
                         <div
-                          key={project.id + '-' + (img.image_url || idx)}
-                          className="relative bg-white dark:bg-gray-900 rounded-xl shadow-lg overflow-hidden group transition-all duration-200 border border-gray-100 dark:border-gray-800 hover:shadow-2xl"
+                          key={`img-${project.id}-${img.id || idx}`}
+                          className="relative bg-white dark:bg-gray-900 rounded-xl shadow-lg overflow-hidden group transition-all duration-200 border border-gray-100 dark:border-gray-800 hover:shadow-2xl cursor-pointer"
+                          onClick={() => navigate(`/portfolio/project/${project.id}`)}
                         >
                           <div className="relative">
                             <img
                               src={img.image_url || '/placeholder.jpg'}
                               alt={project.title}
-                              className="w-full h-56 object-cover rounded-t select-none pointer-events-auto border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:scale-105 transition-transform"
+                              className="w-full h-56 object-cover rounded-t select-none pointer-events-none border-b border-gray-200 dark:border-gray-700 hover:scale-105 transition-transform"
                               draggable={false}
                               onContextMenu={e => e.preventDefault()}
-                              onClick={() => setFullscreenImage(img.image_url)}
                             />
-                            {/* Edit/Delete overlay */}
-                            <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                              <button
-                                type="button"
-                                onClick={() => handleEditImage(project, img)}
-                                className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-2 shadow focus:outline-none"
-                                title="Edit image"
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a4 4 0 01-1.414.828l-4.243 1.415a1 1 0 01-1.263-1.263l1.415-4.243a4 4 0 01.828-1.414z" /></svg>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteImage(project, img)}
-                                className="bg-red-600 hover:bg-red-700 text-white rounded-full p-2 shadow focus:outline-none"
-                                title="Delete image"
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                              </button>
+                          </div>
+                          <div className="px-4 py-3">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1 truncate drop-shadow-lg">{project.title}</h3>
+                            <div className="text-sm text-gray-500 mb-1">
+                              <span className="font-medium">Category:</span> {category?.name || ''}
+                            </div>
+                            <p className="text-gray-600 dark:text-gray-300 mb-2 line-clamp-2 min-h-[2.5em]">{project.description}</p>
+                            {project.tags && project.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-2 mt-2">
+                                {project.tags.map((tag: string) => (
+                                  <span key={tag} className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">{tag}</span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    : []),
+                  // Videos
+                  ...(Array.isArray(project.videos) && project.videos.length > 0
+                    ? project.videos.map((video: any, idx: number) => (
+                        <div
+                          key={`video-${project.id}-${video.id || idx}`}
+                          className="relative bg-white dark:bg-gray-900 rounded-xl shadow-lg overflow-hidden group transition-all duration-200 border border-gray-100 dark:border-gray-800 hover:shadow-2xl cursor-pointer"
+                          onClick={() => navigate(`/portfolio/project/${project.id}`)}
+                        >
+                          <div className="relative">
+                            <video
+                              src={video.video_url}
+                              poster={video.video_thumbnail_url || project.thumbnail_url || undefined}
+                              className="w-full h-56 object-cover rounded-t select-none pointer-events-none border-b border-gray-200 dark:border-gray-700 hover:scale-105 transition-transform"
+                              muted
+                              loop
+                              playsInline
+                              preload="metadata"
+                              onMouseOver={e => (e.currentTarget as HTMLVideoElement).play()}
+                              onMouseOut={e => (e.currentTarget as HTMLVideoElement).pause()}
+                            />
+                            {/* Video indicator */}
+                            <div className="absolute top-3 right-3 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 pointer-events-none">
+                              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z"/>
+                              </svg>
+                              Video
                             </div>
                           </div>
                           <div className="px-4 py-3">
@@ -280,64 +261,38 @@ const CategoryPage = () => {
                           </div>
                         </div>
                       ))
-                    : [
-                        <div
-                          key={project.id + '-single'}
-                          className="relative bg-white dark:bg-gray-900 rounded-xl shadow-lg overflow-hidden group transition-all duration-200 border border-gray-100 dark:border-gray-800 hover:shadow-2xl"
-                        >
-                          <img
-                            src={project.image_url || '/placeholder.jpg'}
-                            alt={project.title}
-                            className="w-full h-56 object-cover rounded-t select-none pointer-events-auto border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:scale-105 transition-transform"
-                            draggable={false}
-                            onContextMenu={e => e.preventDefault()}
-                            onClick={() => setFullscreenImage(project.image_url)}
-                          />
-                          <div className="px-4 py-3">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1 truncate drop-shadow-lg">{project.title}</h3>
-                            <div className="text-sm text-gray-500 mb-1">
-                              <span className="font-medium">Category:</span> {category?.name || ''}
-                            </div>
-                            <p className="text-gray-600 dark:text-gray-300 mb-2 line-clamp-2 min-h-[2.5em]">{project.description}</p>
-                            {project.tags && project.tags.length > 0 && (
-                              <div className="flex flex-wrap gap-2 mt-2">
-                                {project.tags.map((tag: string) => (
-                                  <span key={tag} className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">{tag}</span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ]
-                ))}
+                    : [])
+                ])}
               </div>
             </div>
           )}
-         {/* Fullscreen Image Modal */}
-         {fullscreenImage && (
-           <div
-             className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90"
-             onClick={() => setFullscreenImage(null)}
-           >
-             <img
-               src={fullscreenImage}
-               alt="Full Size"
-               className="max-w-full max-h-full rounded shadow-lg select-none pointer-events-none"
-               onClick={e => e.stopPropagation()}
-               draggable={false}
-               onContextMenu={e => e.preventDefault()}
-             />
-             <button
-               className="absolute top-6 right-6 text-white text-3xl font-bold bg-black bg-opacity-50 rounded-full px-4 py-2 hover:bg-opacity-80 transition"
-               onClick={() => setFullscreenImage(null)}
-               aria-label="Close"
-             >
-               &times;
-             </button>
-           </div>
-         )}
+
         </motion.div>
       </Section>
+      
+      {/* Fullscreen Image Modal */}
+      {fullscreenImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90"
+          onClick={() => setFullscreenImage(null)}
+        >
+          <img
+            src={fullscreenImage}
+            alt="Full Size"
+            className="max-w-full max-h-full rounded shadow-lg select-none pointer-events-none"
+            onClick={e => e.stopPropagation()}
+            draggable={false}
+            onContextMenu={e => e.preventDefault()}
+          />
+          <button
+            className="absolute top-6 right-6 text-white text-3xl font-bold bg-black bg-opacity-50 rounded-full px-4 py-2 hover:bg-opacity-80 transition"
+            onClick={() => setFullscreenImage(null)}
+            aria-label="Close"
+          >
+            &times;
+          </button>
+        </div>
+      )}
     </div>
   );
 };

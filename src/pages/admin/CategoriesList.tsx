@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Plus, Edit, Trash2, Eye } from 'lucide-react';
 import adminService from '../../services/adminService';
-import { PortfolioCategory } from '../../services/portfolioService';
+import { PortfolioCategory } from '../../types';
 
 const CategoriesList = () => {
   const [categories, setCategories] = useState<PortfolioCategory[]>([]);
@@ -116,7 +116,9 @@ const CategoriesList = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {categories.map((category, index) => (
+          {categories
+            .filter(cat => Array.isArray(cat.portfolio_subcategories) && cat.portfolio_subcategories.length > 0)
+            .map((category, index) => (
             <motion.div
               key={category.id}
               initial={{ opacity: 0, y: 20 }}
@@ -127,13 +129,9 @@ const CategoriesList = () => {
               {/* Category Image */}
               <div className="aspect-[4/3] overflow-hidden">
                 <img
-                  src={category.thumbnail_url || 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400&h=300&fit=crop'}
+                  src={'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400&h=300&fit=crop'}
                   alt={category.name}
                   className="w-full h-full object-cover"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400&h=300&fit=crop';
-                  }}
                 />
               </div>
 

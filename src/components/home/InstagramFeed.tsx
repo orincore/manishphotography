@@ -41,7 +41,7 @@ const InstagramFeed = () => {
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: '-100px' }}
-        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4"
+        className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4"
       >
         {instagramImages.map((image, index) => (
           <motion.div 
@@ -56,22 +56,22 @@ const InstagramFeed = () => {
             />
             <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity duration-300 flex items-center justify-center">
               <Instagram 
-                size={32} 
-                className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" 
+                size={24} 
+                className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 sm:w-8 sm:h-8" 
               />
             </div>
           </motion.div>
         ))}
       </motion.div>
       
-      <div className="mt-8 text-center">
+      <div className="mt-6 sm:mt-8 text-center">
         <a
           href="https://instagram.com"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium"
+          className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium text-sm sm:text-base"
         >
-          <Instagram size={20} />
+          <Instagram size={18} className="sm:w-5 sm:h-5" />
           <span>Follow on Instagram</span>
         </a>
       </div>

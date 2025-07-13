@@ -1,20 +1,29 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Menu, 
-  X, 
-  Camera, 
-  BarChart3, 
-  FolderOpen, 
-  Folder, 
-  Image, 
-  MessageSquare, 
-  Mail, 
-  Instagram, 
+import {
+  Menu,
+  X,
+  Camera,
+  BarChart3,
+  FolderOpen,
+  Folder,
+  Image,
+  MessageSquare,
+  Mail,
+  Instagram,
   LogOut,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Users,
+  LayoutGrid,
+  Upload,
+  Home,
+  MessageCircle,
+  Instagram as InstagramIcon,
+  ListChecks,
+  BarChart4,
+  Info,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 // import logoImage from '../../Assets/logo/IMG_0040.JPG';
@@ -31,13 +40,17 @@ const AdminLayout = () => {
   };
 
   const navItems = [
-    { label: 'Dashboard', path: '/admin/dashboard', icon: BarChart3 },
-    { label: 'Projects', path: '/admin/projects', icon: Image },
-    { label: 'Upload Project', path: '/admin/projects/new', icon: Image },
-    { label: 'Homepage Elements', path: '/admin/homepage', icon: FolderOpen },
-    { label: 'Feedback', path: '/admin/feedback', icon: MessageSquare },
-    { label: 'Contacts', path: '/admin/contacts', icon: Mail },
-    { label: 'Instagram', path: '/admin/instagram', icon: Instagram },
+    { label: 'Dashboard', path: '/admin/dashboard', icon: BarChart4 },
+    { label: 'Portfolio Manager', path: '/admin/portfolio-manager', icon: LayoutGrid },
+    { label: 'Projects', path: '/admin/projects', icon: Folder },
+    { label: 'Packages', path: '/admin/packages', icon: Info },
+    { label: 'Upload Project', path: '/admin/projects/new', icon: Upload },
+    { label: 'Homepage Elements', path: '/admin/homepage', icon: Home },
+    { label: 'About Section', path: '/admin/about-section', icon: Info },
+    { label: 'Team', path: '/admin/team', icon: Users },
+    { label: 'Feedback', path: '/admin/feedback', icon: MessageCircle },
+    { label: 'Contacts', path: '/admin/contacts', icon: ListChecks },
+    { label: 'Instagram', path: '/admin/instagram', icon: InstagramIcon },
   ];
 
   return (
@@ -70,7 +83,7 @@ const AdminLayout = () => {
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
-            
+
             return (
               <Link
                 key={item.path}
@@ -116,7 +129,7 @@ const AdminLayout = () => {
                 {navItems.find(item => item.path === location.pathname)?.label || 'Admin Panel'}
               </h1>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <Link
                 to="/"

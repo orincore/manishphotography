@@ -130,12 +130,12 @@ const FeaturedWork = () => {
       title="Featured Work" 
       subtitle="A showcase of our finest photography and cinematography projects"
     >
-      <div className="mb-8 flex justify-center">
+      <div className="mb-6 sm:mb-8 flex justify-center">
         <div className="inline-flex rounded-md shadow-sm" role="group">
           <button
             type="button"
             onClick={() => setActiveTab('photos')}
-            className={`px-6 py-2 text-sm font-medium border rounded-l-lg ${
+            className={`px-4 sm:px-6 py-2 text-sm font-medium border rounded-l-lg ${
               activeTab === 'photos'
                 ? 'bg-blue-600 text-white border-blue-600'
                 : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700'
@@ -146,7 +146,7 @@ const FeaturedWork = () => {
           <button
             type="button"
             onClick={() => setActiveTab('videos')}
-            className={`px-6 py-2 text-sm font-medium border rounded-r-lg ${
+            className={`px-4 sm:px-6 py-2 text-sm font-medium border rounded-r-lg ${
               activeTab === 'videos'
                 ? 'bg-blue-600 text-white border-blue-600'
                 : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700'
@@ -157,14 +157,14 @@ const FeaturedWork = () => {
         </div>
       </div>
 
-      <div className="mt-8">
+      <div className="mt-6 sm:mt-8">
         {activeTab === 'photos' && (
           <motion.div
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: '-100px' }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6"
           >
             {loading ? (
               <div className="col-span-full text-center py-8">
@@ -227,45 +227,54 @@ const FeaturedWork = () => {
             viewport={{ once: true, margin: '-100px' }}
             className="grid grid-cols-1 md:grid-cols-3 gap-6"
           >
-            {featuredVideos.map((video) => (
-              <motion.div key={video.id} variants={itemVariants}>
-                <Link to={`/portfolio?category=cinematics&id=${video.id}`}>
-                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 relative">
-                    <div className="aspect-video overflow-hidden">
-                      <img
-                        src={video.thumbnail}
-                        alt={video.title}
-                        className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-                      />
-                    </div>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="rounded-full bg-white bg-opacity-80 p-4">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 24 24"
-                          fill="currentColor"
-                          className="w-8 h-8 text-blue-600"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M4.5 5.653c0-1.427 1.529-2.33 2.779-1.643l11.54 6.347c1.295.712 1.295 2.573 0 3.286L7.28 19.99c-1.25.687-2.779-.217-2.779-1.643V5.653Z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
+            {featuredVideos.map(
+              (video) => (
+                <motion.div key={video.id} variants={itemVariants}>
+                  <Link to={`/portfolio?category=cinematics&id=${video.id}`}>
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 relative">
+                      <div className="aspect-video overflow-hidden">
+                        <video
+                          src={video.videoUrl}
+                          poster={video.thumbnail}
+                          className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                          muted
+                          loop
+                          playsInline
+                          preload="metadata"
+                          controls={false}
+                          onMouseOver={e => e.currentTarget.play()}
+                          onMouseOut={e => { e.currentTarget.pause(); e.currentTarget.currentTime = 0; }}
+                        />
+                      </div>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="rounded-full bg-white bg-opacity-80 p-4">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            className="w-8 h-8 text-blue-600"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M4.5 5.653c0-1.427 1.529-2.33 2.779-1.643l11.54 6.347c1.295.712 1.295 2.573 0 3.286L7.28 19.99c-1.25.687-2.779-.217-2.779-1.643V5.653Z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </div>
+                      </div>
+                      <div className="p-5">
+                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                          {video.title}
+                        </h3>
+                        <p className="text-gray-600 dark:text-gray-300">
+                          {video.description}
+                        </p>
                       </div>
                     </div>
-                    <div className="p-5">
-                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                        {video.title}
-                      </h3>
-                      <p className="text-gray-600 dark:text-gray-300">
-                        {video.description}
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
+                  </Link>
+                </motion.div>
+              )
+            )}
           </motion.div>
         )}
       </div>

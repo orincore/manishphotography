@@ -206,6 +206,12 @@ const HomepageManager = () => {
                   src={element.video_url}
                   className="w-full h-full object-cover"
                   muted
+                  loop
+                  playsInline
+                  preload="metadata"
+                  controls={false}
+                  onMouseOver={e => e.currentTarget.play()}
+                  onMouseOut={e => { e.currentTarget.pause(); e.currentTarget.currentTime = 0; }}
                 />
               ) : (
                 <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">

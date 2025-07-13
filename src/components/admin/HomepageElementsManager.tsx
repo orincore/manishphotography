@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import homepageService, { HomepageElement, CreateHomepageElementData } from '../../services/homepageService';
-import notify from '../../utils/notifications';
+import { showSuccessNotification, showErrorNotification, showInfoNotification } from '../../utils/notifications';
 import { useUploadProgress } from '../../hooks/useUploadProgress';
 import UploadProgress from '../common/UploadProgress';
+import { AnimatePresence, motion } from 'framer-motion';
 
 interface HomepageElementsManagerProps {
   onClose?: () => void;
@@ -38,14 +39,6 @@ const HomepageElementsManager: React.FC<HomepageElementsManagerProps> = ({ onClo
   const elementTypes = [
     { value: 'hero', label: 'Hero Image', requiresMedia: true },
     { value: 'hero-video', label: 'Hero Video', requiresMedia: true },
-    { value: 'featured', label: 'Featured Image', requiresMedia: true },
-    { value: 'featured-video', label: 'Featured Video', requiresMedia: true },
-    { value: 'instagram', label: 'Instagram Image', requiresMedia: true },
-    { value: 'about', label: 'About Image', requiresMedia: true },
-    { value: 'gallery', label: 'Gallery Image', requiresMedia: true },
-    { value: 'testimonial', label: 'Testimonial', requiresMedia: false },
-    { value: 'service', label: 'Service', requiresMedia: false },
-    { value: 'contact', label: 'Contact Info', requiresMedia: false },
   ];
 
   useEffect(() => {
@@ -59,7 +52,7 @@ const HomepageElementsManager: React.FC<HomepageElementsManagerProps> = ({ onClo
       setElements(response.elements);
     } catch (error) {
       console.error('Error fetching elements:', error);
-      notify.error('Failed to fetch elements');
+      showErrorNotification('Failed to fetch elements');
     } finally {
       setLoading(false);
     }
@@ -76,13 +69,13 @@ const HomepageElementsManager: React.FC<HomepageElementsManagerProps> = ({ onClo
     e.preventDefault();
     
     if (!uploadData.title.trim()) {
-      notify.error('Title is required');
+      showErrorNotification('Title is required');
       return;
     }
 
     const selectedTypeConfig = elementTypes.find(t => t.value === uploadData.type);
     if (selectedTypeConfig?.requiresMedia && !uploadData.mediaFile) {
-      notify.error('Media file is required for this type');
+      showErrorNotification('Media file is required for this type');
       return;
     }
 
@@ -102,7 +95,7 @@ const HomepageElementsManager: React.FC<HomepageElementsManagerProps> = ({ onClo
       }
     } catch (error) {
       console.error('Error creating element:', error);
-      notify.error('Failed to create element');
+      showErrorNotification('Failed to create element');
       setUploading(false);
     }
   };
@@ -120,11 +113,11 @@ const HomepageElementsManager: React.FC<HomepageElementsManagerProps> = ({ onClo
       setUploading(false);
       
       // Show initial "Starting" notification
-      notify.info('Starting video upload...');
+      showInfoNotification('Starting video upload...');
 
       // Show "Upload successful" after 1 minute
       setTimeout(() => {
-        notify.success('Upload successful! Your video will be visible shortly.');
+        showSuccessNotification('Upload successful! Your video will be visible shortly.');
       }, 60000); // 1 minute
 
       const formData = new FormData();
@@ -166,7 +159,7 @@ const HomepageElementsManager: React.FC<HomepageElementsManagerProps> = ({ onClo
       if (error instanceof Error) {
         if (error.message.includes('timeout') || error.message.includes('Request timeout')) {
           // For timeouts, show a more helpful message and suggest checking the admin panel
-          notify.info('Video compression is taking longer than expected. The upload may still be processing in the background. Please check the homepage elements list in a few minutes, or try uploading a smaller video file.');
+          showInfoNotification('Video compression is taking longer than expected. The upload may still be processing in the background. Please check the homepage elements list in a few minutes, or try uploading a smaller video file.');
           setCurrentUploadId(null);
           
           // More robust background checking - check multiple times
@@ -178,7 +171,7 @@ const HomepageElementsManager: React.FC<HomepageElementsManagerProps> = ({ onClo
               const newCount = elements.length;
               
               if (newCount > previousCount) {
-                notify.success('Video upload completed successfully in the background!');
+                showSuccessNotification('Video upload completed successfully in the background!');
                 setBackgroundChecking(false);
                 return true;
               } else {
@@ -186,7 +179,7 @@ const HomepageElementsManager: React.FC<HomepageElementsManagerProps> = ({ onClo
                 if (attempt < 10) { // Try up to 10 times (5 minutes total)
                   setTimeout(() => checkUploadStatus(attempt + 1), 30000); // Check every 30 seconds
                 } else {
-                  notify.info('Upload may still be processing. Please refresh the page in a few minutes to see if it completed.');
+                  showInfoNotification('Upload may still be processing. Please refresh the page in a few minutes to see if it completed.');
                   setBackgroundChecking(false);
                 }
                 return false;
@@ -196,7 +189,7 @@ const HomepageElementsManager: React.FC<HomepageElementsManagerProps> = ({ onClo
               if (attempt < 10) { // Try up to 10 times
                 setTimeout(() => checkUploadStatus(attempt + 1), 30000);
               } else {
-                notify.info('Unable to check upload status. Please refresh the page in a few minutes.');
+                showInfoNotification('Unable to check upload status. Please refresh the page in a few minutes.');
                 setBackgroundChecking(false);
               }
               return false;
@@ -239,7 +232,7 @@ const HomepageElementsManager: React.FC<HomepageElementsManagerProps> = ({ onClo
     const result = await homepageService.createElement(formData);
     
     // For regular uploads (images, small videos), don't use progress tracking
-    notify.success('Element created successfully');
+    showSuccessNotification('Element created successfully');
     setShowUploadForm(false);
     resetUploadForm();
     fetchElements();
@@ -263,12 +256,12 @@ const HomepageElementsManager: React.FC<HomepageElementsManagerProps> = ({ onClo
       }
 
       await homepageService.updateElement(element.id, updatedData);
-      notify.success('Element updated successfully');
+      showSuccessNotification('Element updated successfully');
       setEditingElement(null);
       fetchElements();
     } catch (error) {
       console.error('Error updating element:', error);
-      notify.error('Failed to update element');
+      showErrorNotification('Failed to update element');
     }
   };
 
@@ -277,22 +270,22 @@ const HomepageElementsManager: React.FC<HomepageElementsManagerProps> = ({ onClo
 
     try {
       await homepageService.deleteElement(elementId);
-      notify.success('Element deleted successfully');
+      showSuccessNotification('Element deleted successfully');
       fetchElements();
     } catch (error) {
       console.error('Error deleting element:', error);
-      notify.error('Failed to delete element');
+      showErrorNotification('Failed to delete element');
     }
   };
 
   const handleToggleActive = async (element: HomepageElement) => {
     try {
       await homepageService.toggleActiveStatus(element.id, !element.is_active);
-      notify.success(`Element ${element.is_active ? 'deactivated' : 'activated'} successfully`);
+      showSuccessNotification(`Element ${element.is_active ? 'deactivated' : 'activated'} successfully`);
       fetchElements();
     } catch (error) {
       console.error('Error toggling element status:', error);
-      notify.error('Failed to update element status');
+      showErrorNotification('Failed to update element status');
     }
   };
 
@@ -317,7 +310,7 @@ const HomepageElementsManager: React.FC<HomepageElementsManagerProps> = ({ onClo
     // (to avoid duplicate messages with the 1-minute timer)
     const timeSinceUpload = Date.now() - parseInt(currentUploadId?.split('_')[1] || '0');
     if (timeSinceUpload > 60000) {
-      notify.success('Video upload completed successfully!');
+      showSuccessNotification('Video upload completed successfully!');
     }
     fetchElements();
     setUploading(false);
@@ -326,7 +319,7 @@ const HomepageElementsManager: React.FC<HomepageElementsManagerProps> = ({ onClo
 
   // Handle upload error
   const handleUploadError = (errorMessage: string) => {
-    notify.error(`Upload failed: ${errorMessage}`);
+    showErrorNotification(`Upload failed: ${errorMessage}`);
     setUploading(false);
     setCurrentUploadId(null);
   };
@@ -336,7 +329,7 @@ const HomepageElementsManager: React.FC<HomepageElementsManagerProps> = ({ onClo
     stopTracking();
     setUploading(false);
     setCurrentUploadId(null);
-    notify.info('Upload cancelled');
+    showInfoNotification('Upload cancelled');
   };
 
   const getMediaPreview = (element: HomepageElement) => {
@@ -365,7 +358,7 @@ const HomepageElementsManager: React.FC<HomepageElementsManagerProps> = ({ onClo
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-gray-50 p-2 sm:p-4 md:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center h-64">
             <div className="text-xl">Loading elements...</div>
@@ -376,7 +369,7 @@ const HomepageElementsManager: React.FC<HomepageElementsManagerProps> = ({ onClo
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-2 sm:p-4 md:p-6 lg:p-8">
       {/* Progress Tracking - Only show for video uploads */}
       {currentUploadId && currentUploadId.startsWith('temp_') && (
         <UploadProgress
@@ -389,29 +382,29 @@ const HomepageElementsManager: React.FC<HomepageElementsManagerProps> = ({ onClo
       
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 md:mb-8 gap-4 md:gap-0">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Homepage Elements Manager</h1>
-            <p className="text-gray-600 mt-2">Manage all homepage content including hero images, testimonials, and more</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Homepage Elements Manager</h1>
+            <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">Manage all homepage content including hero images, testimonials, and more</p>
             {backgroundChecking && (
               <div className="mt-2 flex items-center space-x-2 text-blue-600">
                 <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-                <span className="text-sm">Checking for completed uploads in background...</span>
+                <span className="text-xs sm:text-sm">Checking for completed uploads in background...</span>
               </div>
             )}
           </div>
-          <div className="flex space-x-4">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full md:w-auto">
             <button
               onClick={() => setShowUploadForm(true)}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              className="bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors w-full sm:w-auto"
             >
               Add New Element
             </button>
             <button
               onClick={fetchElements}
-              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+              className="bg-green-600 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2 w-full sm:w-auto"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -421,7 +414,7 @@ const HomepageElementsManager: React.FC<HomepageElementsManagerProps> = ({ onClo
             {onClose && (
               <button
                 onClick={onClose}
-                className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                className="bg-gray-600 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors w-full sm:w-auto"
               >
                 Close
               </button>
@@ -430,106 +423,142 @@ const HomepageElementsManager: React.FC<HomepageElementsManagerProps> = ({ onClo
         </div>
 
         {/* Type Filter */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-          <h2 className="text-lg font-semibold mb-4">Filter by Type</h2>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            {elementTypes.map((type) => (
-              <button
+        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-6 sm:mb-8 overflow-x-auto">
+          <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Filter by Type</h2>
+          <motion.div 
+            className="flex flex-wrap gap-2 sm:gap-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            {elementTypes.map((type, index) => (
+              <motion.button
                 key={type.value}
                 onClick={() => setSelectedType(type.value)}
-                className={`p-3 rounded-lg border-2 transition-colors ${
+                className={`p-2 sm:p-3 rounded-lg border-2 transition-all duration-300 text-xs sm:text-sm min-w-[120px] sm:min-w-[140px] ${
                   selectedType === type.value
-                    ? 'border-blue-500 bg-blue-50 text-blue-700'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-md'
+                    : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
                 }`}
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ 
+                  duration: 0.4, 
+                  delay: index * 0.1,
+                  ease: [0.25, 0.46, 0.45, 0.94]
+                }}
+                whileHover={{ 
+                  scale: 1.02,
+                  transition: { duration: 0.2 }
+                }}
+                whileTap={{ 
+                  scale: 0.98,
+                  transition: { duration: 0.1 }
+                }}
               >
                 <div className="font-medium">{type.label}</div>
-                <div className="text-xs text-gray-500">
+                <div className="text-[10px] sm:text-xs text-gray-500">
                   {type.requiresMedia ? 'Media Required' : 'Text Only'}
                 </div>
-              </button>
+              </motion.button>
             ))}
-          </div>
+          </motion.div>
         </div>
 
         {/* Elements Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {elements.map((element) => (
-            <div key={element.id} className="bg-white rounded-lg shadow-sm overflow-hidden">
-              {/* Media Preview */}
-              {getMediaPreview(element)}
-              
-              {/* Content */}
-              <div className="p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="font-semibold text-lg">{element.title}</h3>
-                    {element.subtitle && (
-                      <p className="text-gray-600 text-sm">{element.subtitle}</p>
-                    )}
-                  </div>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => setEditingElement(element)}
-                      className="text-blue-600 hover:text-blue-800"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(element.id)}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-
-                {element.description && (
-                  <p className="text-gray-700 text-sm mb-4">{element.description}</p>
-                )}
-
-                {/* Status Indicators */}
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex space-x-2">
-                    <span className={`px-2 py-1 rounded ${
-                      element.is_active 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {element.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                    {element.is_featured && (
-                      <span className="px-2 py-1 rounded bg-yellow-100 text-yellow-800">
-                        Featured
-                      </span>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => handleToggleActive(element)}
-                    className={`px-3 py-1 rounded text-sm ${
-                      element.is_active
-                        ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                        : 'bg-green-100 text-green-700 hover:bg-green-200'
-                    }`}
-                  >
-                    {element.is_active ? 'Deactivate' : 'Activate'}
-                  </button>
-                </div>
-
-                {/* Video Settings (if applicable) */}
-                {element.type.includes('video') && (
-                  <div className="mt-4 pt-4 border-t border-gray-200">
-                    <div className="text-xs text-gray-500 space-y-1">
-                      <div>Autoplay: {element.video_autoplay ? 'Yes' : 'No'}</div>
-                      <div>Muted: {element.video_muted ? 'Yes' : 'No'}</div>
-                      <div>Loop: {element.video_loop ? 'Yes' : 'No'}</div>
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={selectedType}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -30 }}
+            transition={{ 
+              duration: 0.5, 
+              ease: [0.25, 0.46, 0.45, 0.94],
+              staggerChildren: 0.1
+            }}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
+          >
+            {elements.map((element, index) => (
+              <motion.div 
+                key={element.id} 
+                className="bg-white rounded-lg shadow-sm overflow-hidden flex flex-col"
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ 
+                  duration: 0.4, 
+                  delay: index * 0.1,
+                  ease: [0.25, 0.46, 0.45, 0.94]
+                }}
+                whileHover={{ 
+                  y: -5,
+                  transition: { duration: 0.2 }
+                }}
+              >
+                {/* Media Preview */}
+                {getMediaPreview(element)}
+                
+                {/* Content */}
+                <div className="p-4 sm:p-6 flex-1 flex flex-col justify-between">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-3 sm:mb-4 gap-2 sm:gap-0">
+                    <div>
+                      <h3 className="font-semibold text-base sm:text-lg">{element.title}</h3>
+                      {element.subtitle && (
+                        <p className="text-gray-600 text-xs sm:text-sm">{element.subtitle}</p>
+                      )}
+                    </div>
+                    <div className="flex space-x-2 mt-2 sm:mt-0">
+                      <button
+                        onClick={() => setEditingElement(element)}
+                        className="text-blue-600 hover:text-blue-800 text-xs sm:text-sm transition-colors duration-200"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(element.id)}
+                        className="text-red-600 hover:text-red-800 text-xs sm:text-sm transition-colors duration-200"
+                      >
+                        Delete
+                      </button>
                     </div>
                   </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+
+                  {element.description && (
+                    <p className="text-gray-700 text-xs sm:text-sm mb-3 sm:mb-4">{element.description}</p>
+                  )}
+
+                  {/* Status Indicators */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs sm:text-sm gap-2 sm:gap-0">
+                    <div className="flex space-x-2">
+                      <span className={`px-2 py-1 rounded transition-colors duration-200 ${
+                        element.is_active 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {element.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                      {element.is_featured && (
+                        <span className="px-2 py-1 rounded bg-yellow-100 text-yellow-800 transition-colors duration-200">
+                          Featured
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handleToggleActive(element)}
+                      className={`px-3 py-1 rounded text-xs sm:text-sm transition-all duration-200 ${
+                        element.is_active
+                          ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                          : 'bg-green-100 text-green-700 hover:bg-green-200'
+                      }`}
+                    >
+                      {element.is_active ? 'Deactivate' : 'Activate'}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </AnimatePresence>
 
         {elements.length === 0 && (
           <div className="text-center py-12">

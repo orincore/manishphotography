@@ -5,18 +5,34 @@ import {
   Image, 
   Tag, 
   BarChart4,
-  Settings
+  Settings,
+  LayoutGrid,
+  Upload,
+  Home,
+  MessageCircle,
+  Instagram as InstagramIcon,
+  ListChecks,
+  FilePlus,
+  Folder,
+  Info,
+  Package as PackageIcon,
 } from 'lucide-react';
 
 const AdminNavbar = () => {
   const location = useLocation();
   
   const navItems = [
-    { label: 'Dashboard', path: '/admin', icon: <BarChart4 size={20} /> },
-    { label: 'Users', path: '/admin/users', icon: <Users size={20} /> },
-    { label: 'Portfolio', path: '/admin/portfolio', icon: <Image size={20} /> },
-    { label: 'Offers', path: '/admin/offers', icon: <Tag size={20} /> },
-    { label: 'Settings', path: '/admin/settings', icon: <Settings size={20} /> },
+    { label: 'Dashboard', path: '/admin/dashboard', icon: <BarChart4 size={20} /> },
+    { label: 'Portfolio Manager', path: '/admin/portfolio-manager', icon: <LayoutGrid size={20} /> },
+    { label: 'Projects', path: '/admin/projects', icon: <Folder size={20} /> },
+    { label: 'Packages', path: '/admin/packages', icon: <PackageIcon size={20} /> },
+    { label: 'Upload Project', path: '/admin/projects/new', icon: <Upload size={20} /> },
+    { label: 'Homepage Elements', path: '/admin/homepage', icon: <Home size={20} /> },
+    { label: 'About Section', path: '/admin/about-section', icon: <Info size={20} /> },
+    { label: 'Team', path: '/admin/team', icon: <Users size={20} /> },
+    { label: 'Feedback', path: '/admin/feedback', icon: <MessageCircle size={20} /> },
+    { label: 'Contacts', path: '/admin/contacts', icon: <ListChecks size={20} /> },
+    { label: 'Instagram', path: '/admin/instagram', icon: <InstagramIcon size={20} /> },
   ];
 
   return (

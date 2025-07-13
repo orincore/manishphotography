@@ -7,8 +7,25 @@ export { default as feedbackService } from './feedbackService';
 export { default as homepageService } from './homepageService';
 export { default as contactService } from './contactService';
 export { default as instagramService } from './instagramService';
+export { default as teamService } from './teamService';
+export { default as packageService } from './packageService';
 
 // Export types
+import type {
+  PortfolioProject,
+  PortfolioResponse,
+  PortfolioCategory,
+  PortfolioSubcategory,
+  CategoriesResponse,
+  CategoryResponse,
+  SubcategoryResponse,
+  PortfolioStats,
+  SearchParams,
+  VideoUploadSettings,
+  PortfolioVideo,
+  PortfolioImage,
+} from '../types';
+
 export type {
   LoginData,
   RegisterData,
@@ -17,24 +34,12 @@ export type {
 } from './authService';
 
 export type {
-  PortfolioProject,
-  PortfolioResponse,
-  PortfolioCategory,
-  PortfolioSubcategory,
-  CategoriesResponse,
-  SubcategoryResponse,
-  PortfolioTag,
-  PortfolioStats,
-  SearchParams,
-} from './portfolioService';
-
-export type {
   Feedback,
   CreateFeedbackData,
   UpdateFeedbackData,
   FeedbackSummary,
   FeedbackStats,
-  BulkModerateData,
+  BulkModerateFeedbackData,
 } from './feedbackService';
 
 export type {
@@ -45,8 +50,6 @@ export type {
 } from './homepageService';
 
 export type {
-  ContactMessage,
-  CreateContactData,
   ContactStats,
   ContactSearchParams,
   BulkActionData,
@@ -58,12 +61,4 @@ export type {
   InstagramStory,
   InstagramInsights,
   HomepageFeed,
-} from './instagramService';
-
-export type {
-  CreateCategoryData,
-  CreateSubcategoryData,
-  CreateProjectData,
-  UpdateProjectData,
-  AdminPortfolioStats,
-} from './adminService'; 
+} from './instagramService'; 

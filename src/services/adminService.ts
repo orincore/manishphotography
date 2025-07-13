@@ -196,24 +196,12 @@ const adminService = {
   },
 
   updateProject: async (projectId: string, data: any): Promise<{ project: PortfolioProject }> => {
-    const token = localStorage.getItem('authToken');
-    const response = await axios.put(
-      `http://localhost:3000/api/portfolio/${projectId}`,
-      data,
-      {
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
-      }
-    );
+    const response = await adminApi.put(`/portfolio/${projectId}`, data);
     return response.data;
   },
 
   deleteProject: async (projectId: string): Promise<void> => {
-    const token = localStorage.getItem('authToken');
-    await axios.delete(`http://localhost:3000/api/portfolio/project/${projectId}`,
-      {
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
-      }
-    );
+    await adminApi.delete(`/portfolio/project/${projectId}`);
   },
 
   togglePublishStatus: async (id: string, isPublished: boolean): Promise<void> => {

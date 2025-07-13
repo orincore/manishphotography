@@ -1,12 +1,10 @@
 import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
-
-// API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+import config from '../config';
 
 // Create axios instance
 const api: AxiosInstance = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 1800000, // 30 minutes for video uploads
+  baseURL: config.api.baseURL,
+  timeout: config.api.timeout,
   headers: {
     'Content-Type': 'application/json',
   },

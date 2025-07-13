@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { createPortfolioProject, fetchCategories, fetchSubcategories, createCategory } from '../../services/portfolioService';
-import { PlusCircle, Image as ImageIcon, Loader2, CheckCircle, AlertCircle, Trash2 } from 'lucide-react';
+import { createPortfolioProject, fetchCategories, fetchSubcategories } from '../../services/portfolioService';
+import portfolioService from '../../services/portfolioService';
+import adminService from '../../services/adminService';
+import { PlusCircle, Image as ImageIcon, Loader2, CheckCircle, AlertCircle, Trash2, Video, Volume2, VolumeX, Play, Pause, RotateCcw, Settings } from 'lucide-react';
 import axios from 'axios';
 import api from '../../services/api';
 
@@ -13,7 +15,17 @@ const ProjectUploadForm = () => {
     tags: '',
     isPublished: true, // default to published
     images: [] as File[],
+    videos: [] as File[],
   });
+  
+  // Video settings state
+  const [videoSettings, setVideoSettings] = useState({
+    video_autoplay: false,
+    video_muted: false, // Allow audio by default
+    video_loop: false,
+    order_index: 0
+  });
+
   const [categories, setCategories] = useState<any[]>([]);
   const [subcategories, setSubcategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -43,7 +55,11 @@ const ProjectUploadForm = () => {
     const { name, value, type, checked, files } = e.target as any;
     if (type === 'file') {
       const fileArray = Array.from(files as FileList).slice(0, 10) as File[];
-      setForm(f => ({ ...f, images: fileArray }));
+      if (name === 'images') {
+        setForm(f => ({ ...f, images: fileArray }));
+      } else if (name === 'videos') {
+        setForm(f => ({ ...f, videos: fileArray }));
+      }
     } else if (type === 'checkbox') {
       setForm(f => ({ ...f, [name]: checked }));
     } else {
@@ -57,6 +73,10 @@ const ProjectUploadForm = () => {
     }
   };
 
+  const handleVideoSettingsChange = (setting: string, value: boolean | number) => {
+    setVideoSettings(prev => ({ ...prev, [setting]: value }));
+  };
+
   const handleCreateCategory = async () => {
     if (!newCategoryName.trim()) {
       setCategoryError('Category name is required');
@@ -65,9 +85,15 @@ const ProjectUploadForm = () => {
     setCreatingCategory(true);
     setCategoryError('');
     try {
-      const newCat = await createCategory(newCategoryName.trim(), newCategoryDescription, newCategoryOrder);
-      setCategories((prev) => [...prev, newCat]);
-      setForm(f => ({ ...f, category: newCat.id }));
+      const newCat = await adminService.createCategory({
+        name: newCategoryName.trim(),
+        slug: toSnug(newCategoryName.trim()),
+        description: newCategoryDescription,
+        display_order: newCategoryOrder,
+        is_active: true
+      });
+      setCategories((prev) => [...prev, newCat.category]);
+      setForm(f => ({ ...f, category: newCat.category.id }));
       setShowNewCategoryInput(false);
       setNewCategoryName('');
       setNewCategoryDescription('');
@@ -88,42 +114,69 @@ const ProjectUploadForm = () => {
     setError('');
     setSuccess('');
     setUploadProgress(0);
-    // Validate at least one image
-    if (!form.images || form.images.length === 0) {
-      setError('At least one image is required.');
+    
+    // Validate at least one image or video
+    if ((!form.images || form.images.length === 0) && (!form.videos || form.videos.length === 0)) {
+      setError('At least one image or video is required.');
       setLoading(false);
       return;
     }
+    
     try {
+      // Use the mixed media endpoint for projects with images, videos, or both
       const formData = new FormData();
       formData.append('title', form.title);
       formData.append('description', form.description);
+      
       // Find the selected category name from the dropdown
       let categoryName = '';
       if (form.category) {
         const selectedCat = categories.find((cat: any) => cat.id === form.category || cat.snug === form.category);
         categoryName = selectedCat ? selectedCat.name : form.category;
       }
+      
       // Always send the slug/snug as the category field
       formData.append('category', toSnug(categoryName));
       if (form.subcategoryId) formData.append('subcategoryId', form.subcategoryId);
       if (form.tags) formData.append('tags', JSON.stringify(form.tags.split(',').map((t: string) => t.trim())));
       formData.append('isPublished', String(form.isPublished));
+      
+      // Add all media files (images and videos) to the same 'media' field
+      // Images first
       form.images.forEach(img => {
-        formData.append('images', img);
+        formData.append('media', img);
       });
-      // Use the api instance for correct baseURL and auth
-      await api.post('/portfolio/', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-        timeout: 300000, // 5 minutes
-        onUploadProgress: (progressEvent) => {
-          if (progressEvent.total) {
-            setUploadProgress(Math.round((progressEvent.loaded * 100) / progressEvent.total));
-          }
-        },
+      
+      // Videos with their settings
+      form.videos.forEach((video, index) => {
+        formData.append('media', video);
+        // Add video metadata for each video
+        formData.append('video_autoplay', videoSettings.video_autoplay.toString());
+        formData.append('video_muted', videoSettings.video_muted.toString());
+        formData.append('video_loop', videoSettings.video_loop.toString());
+        formData.append('order_index', (videoSettings.order_index + index).toString());
       });
-      setSuccess('Project created successfully!');
-      setForm({ title: '', description: '', category: '', subcategoryId: '', tags: '', isPublished: true, images: [] });
+
+      // Create project with mixed media using the correct endpoint
+      const projectResponse = await portfolioService.createProjectWithMedia(formData);
+
+      setSuccess('Project created successfully with all media!');
+      setForm({ 
+        title: '', 
+        description: '', 
+        category: '', 
+        subcategoryId: '', 
+        tags: '', 
+        isPublished: true, 
+        images: [],
+        videos: []
+      });
+      setVideoSettings({
+        video_autoplay: false,
+        video_muted: false,
+        video_loop: false,
+        order_index: 0
+      });
       setUploadProgress(0);
     } catch (err: any) {
       setError(err?.response?.data?.message || err.message || 'Failed to create project');
@@ -137,10 +190,25 @@ const ProjectUploadForm = () => {
     setForm(f => ({ ...f, images: f.images.filter((_, i) => i !== idx) }));
   };
 
+  // Remove video handler
+  const handleRemoveVideo = (idx: number) => {
+    setForm(f => ({ ...f, videos: f.videos.filter((_, i) => i !== idx) }));
+  };
+
+  // Format file size
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
   return (
-    <form onSubmit={handleSubmit} encType="multipart/form-data" className="max-w-4xl w-full mx-auto bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-6 md:p-12 mt-6 mb-10">
+    <form onSubmit={handleSubmit} encType="multipart/form-data" className="max-w-6xl w-full mx-auto bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-6 md:p-12 mt-6 mb-10">
       <h2 className="text-2xl md:text-3xl font-bold mb-2 text-gray-900 dark:text-white">Upload New Portfolio Project</h2>
-      <p className="text-gray-500 dark:text-gray-400 mb-6">Fill in the details below to add a new project to your portfolio.</p>
+      <p className="text-gray-500 dark:text-gray-400 mb-6">Fill in the details below to add a new project to your portfolio with images and videos.</p>
+      
       {loading && (
         <div className="w-full mb-4">
           <div className="h-3 w-full bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
@@ -152,16 +220,25 @@ const ProjectUploadForm = () => {
           <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 text-right">{uploadProgress}%</div>
         </div>
       )}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="flex flex-col gap-4">
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Column - Basic Info */}
+        <div className="lg:col-span-1 flex flex-col gap-4">
           <div>
             <label className="block font-semibold mb-1">Title</label>
             <input name="title" value={form.title} onChange={handleChange} required className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition" />
           </div>
+          
+          <div>
+            <label className="block font-semibold mb-1">Description</label>
+            <textarea name="description" value={form.description} onChange={handleChange} required className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 min-h-[100px] bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition" />
+          </div>
+
           <div>
             <label className="block font-semibold mb-1">Tags <span className="text-xs text-gray-400">(comma separated)</span></label>
             <input name="tags" value={form.tags} onChange={handleChange} className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition" />
           </div>
+
           <div>
             <label className="block font-semibold mb-1">Category</label>
             <select name="category" value={form.category} onChange={handleChange} required className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
@@ -189,6 +266,7 @@ const ProjectUploadForm = () => {
               </div>
             )}
           </div>
+
           {subcategories.length > 0 && (
             <div>
               <label className="block font-semibold mb-1">Subcategory <span className="text-xs text-gray-400">(optional)</span></label>
@@ -200,16 +278,30 @@ const ProjectUploadForm = () => {
               </select>
             </div>
           )}
-        </div>
-        <div className="flex flex-col gap-4">
-          <div>
-            <label className="block font-semibold mb-1">Description</label>
-            <textarea name="description" value={form.description} onChange={handleChange} required className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 min-h-[100px] bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition" />
+
+          <div className="flex items-center gap-3 mt-2">
+            <input type="checkbox" name="isPublished" checked={form.isPublished} onChange={handleChange} id="isPublished" className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
+            <label htmlFor="isPublished" className="font-semibold">Published</label>
           </div>
-          <div>
-            <label className="block font-semibold mb-1">Images <span className="text-xs text-gray-400">(up to 10)</span></label>
+        </div>
+
+        {/* Right Column - Media Upload */}
+        <div className="lg:col-span-2 flex flex-col gap-6">
+          {/* Images Section */}
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <ImageIcon className="text-blue-600" size={20} />
+              Images <span className="text-sm text-gray-500">(up to 10)</span>
+            </h3>
             <div className="flex flex-col gap-2">
-              <input type="file" name="images" accept="image/*" multiple onChange={handleChange} required className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white" />
+              <input 
+                type="file" 
+                name="images" 
+                accept="image/*" 
+                multiple 
+                onChange={handleChange}
+                className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white" 
+              />
               {form.images.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-2">
                   {form.images.map((img, idx) => (
@@ -229,15 +321,143 @@ const ProjectUploadForm = () => {
               )}
             </div>
           </div>
-          <div className="flex items-center gap-3 mt-2">
-            <input type="checkbox" name="isPublished" checked={form.isPublished} onChange={handleChange} id="isPublished" className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
-            <label htmlFor="isPublished" className="font-semibold">Published</label>
+
+          {/* Videos Section */}
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Video className="text-purple-600" size={20} />
+              Videos <span className="text-sm text-gray-500">(up to 10, max 500MB each)</span>
+            </h3>
+            
+            <div className="flex flex-col gap-4">
+              <input 
+                type="file" 
+                name="videos" 
+                accept="video/*" 
+                multiple 
+                onChange={handleChange}
+                className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white" 
+              />
+              
+              {/* Video Settings */}
+              <div className="bg-white dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                  <Settings className="text-gray-600" size={16} />
+                  Video Settings
+                </h4>
+                
+                {/* Audio Settings - Prominent */}
+                <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Volume2 className="text-blue-600" size={18} />
+                    <span className="font-semibold text-blue-700 dark:text-blue-300">Audio Settings</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="video_muted"
+                        checked={videoSettings.video_muted}
+                        onChange={(e) => handleVideoSettingsChange('video_muted', e.target.checked)}
+                        className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor="video_muted" className="text-sm font-medium">
+                        {videoSettings.video_muted ? 'Muted (No Audio)' : 'Audio Enabled'}
+                      </label>
+                    </div>
+                    {videoSettings.video_muted ? (
+                      <VolumeX className="text-red-500" size={16} />
+                    ) : (
+                      <Volume2 className="text-green-500" size={16} />
+                    )}
+                  </div>
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                    {videoSettings.video_muted 
+                      ? 'Video will be uploaded without audio' 
+                      : 'Video will include audio track'
+                    }
+                  </p>
+                </div>
+                
+                {/* Other Video Settings */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="video_autoplay"
+                      checked={videoSettings.video_autoplay}
+                      onChange={(e) => handleVideoSettingsChange('video_autoplay', e.target.checked)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="video_autoplay" className="text-sm font-medium">Autoplay</label>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="video_loop"
+                      checked={videoSettings.video_loop}
+                      onChange={(e) => handleVideoSettingsChange('video_loop', e.target.checked)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="video_loop" className="text-sm font-medium">Loop</label>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="order_index" className="text-sm font-medium">Order Index:</label>
+                    <input
+                      type="number"
+                      id="order_index"
+                      value={videoSettings.order_index}
+                      onChange={(e) => handleVideoSettingsChange('order_index', parseInt(e.target.value) || 0)}
+                      className="w-16 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-800"
+                      min="0"
+                    />
+                  </div>
+                </div>
+                
+                <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                  <p>• <strong>Audio is enabled by default</strong> - uncheck "Muted" to preserve audio in your videos</p>
+                  <p>• Autoplay videos are automatically muted to comply with browser policies</p>
+                  <p>• Order index controls the display sequence of videos</p>
+                  <p>• Supported formats: MP4, MOV, AVI, WebM (max 500MB per file)</p>
+                </div>
+              </div>
+
+              {/* Video Previews */}
+              {form.videos.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-sm">Selected Videos:</h4>
+                  {form.videos.map((video, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-3 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+                      <div className="flex items-center gap-3">
+                        <Video className="text-purple-600" size={20} />
+                        <div>
+                          <div className="font-medium text-sm">{video.name}</div>
+                          <div className="text-xs text-gray-500">{formatFileSize(video.size)}</div>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveVideo(idx)}
+                        className="p-1 text-red-600 hover:text-red-800 transition-colors"
+                        title="Remove video"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
+
       <div className="flex flex-col md:flex-row items-center gap-4 mt-10">
         <button type="submit" disabled={loading} className="flex items-center gap-2 px-8 py-3 bg-blue-600 text-white rounded-xl font-semibold text-lg shadow hover:bg-blue-700 transition disabled:opacity-60">
-          {loading ? <Loader2 className="animate-spin" size={22} /> : <ImageIcon size={22} />} {loading ? 'Uploading...' : 'Create Project'}
+          {loading ? <Loader2 className="animate-spin" size={22} /> : <ImageIcon size={22} />} 
+          {loading ? 'Uploading...' : 'Create Project'}
         </button>
         {error && <div className="text-red-600 flex items-center gap-2"><AlertCircle size={20} />{error}</div>}
         {success && <div className="text-green-600 flex items-center gap-2"><CheckCircle size={20} />{success}</div>}

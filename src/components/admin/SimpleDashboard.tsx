@@ -18,6 +18,7 @@ import {
 import DashboardStats from './DashboardStats';
 import DashboardChart from './DashboardChart';
 import adminService, { DashboardStats as DashboardStatsType } from '../../services/adminService';
+import PackageManager from './PackageManager';
 
 const SimpleDashboard = () => {
   const [stats, setStats] = useState<DashboardStatsType>({
@@ -67,6 +68,13 @@ const SimpleDashboard = () => {
   };
 
   const quickActions = [
+    {
+      title: 'Portfolio Manager',
+      description: 'Manage projects with images and videos',
+      icon: Image,
+      path: '/admin/portfolio-manager',
+      color: 'bg-purple-500'
+    },
     {
       title: 'Add Category',
       description: 'Create a new portfolio category',
@@ -307,6 +315,10 @@ const SimpleDashboard = () => {
             <DashboardChart />
           </div>
         </div>
+      </div>
+      {/* Add Package Manager Section */}
+      <div className="mt-12">
+        <PackageManager />
       </div>
     </div>
   );

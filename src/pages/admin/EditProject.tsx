@@ -1,7 +1,8 @@
-import React, { useEffect, useState, ChangeEvent } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
-import { fetchCategories, PortfolioCategory, createCategory as createCategoryService } from '../../services/portfolioService';
+import adminApi from '../../services/api';
+// import { fetchCategories, PortfolioCategory } from '../../services/portfolioService';
+import adminService from '../../services/adminService';
 import { ArrowLeft, Save, PlusCircle, Loader2, CheckCircle, AlertCircle, Image as ImageIcon } from 'lucide-react';
 
 const EditProject = () => {
@@ -11,7 +12,7 @@ const EditProject = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [categories, setCategories] = useState<PortfolioCategory[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -37,9 +38,16 @@ const EditProject = () => {
 
   const fetchCategoriesList = async () => {
     try {
-      const cats = await fetchCategories();
-      setCategories(cats);
-    } catch {}
+      const response = await fetch('/api/portfolio/cat/all');
+      const data = await response.json();
+      if (data && Array.isArray(data.categories)) {
+        setCategories(data.categories);
+      } else {
+        setCategories([]);
+      }
+    } catch {
+      setCategories([]);
+    }
   };
 
   const fetchProject = async () => {
@@ -47,9 +55,7 @@ const EditProject = () => {
       setLoading(true);
       setError(null);
       const token = localStorage.getItem('authToken');
-      const res = await axios.get(`http://localhost:3000/api/portfolio/${projectId}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
+      const res = await adminApi.get(`/portfolio/${projectId}`);
       const project = res.data.project;
       setForm({
         title: project.title || '',
@@ -96,9 +102,15 @@ const EditProject = () => {
     setCreatingCategory(true);
     setCategoryError('');
     try {
-      const newCat = await createCategoryService(newCategoryName.trim(), newCategoryDescription, newCategoryOrder);
-      setCategories((prev) => [...prev, newCat]);
-      setForm(f => ({ ...f, category: newCat.slug }));
+      const newCat = await adminService.createCategory({
+        name: newCategoryName.trim(),
+        description: newCategoryDescription,
+        display_order: newCategoryOrder,
+        slug: '', // Let backend generate or ignore if not needed
+        is_active: true
+      });
+      setCategories((prev) => [...prev, newCat.category]);
+      setForm(f => ({ ...f, category: newCat.category.slug }));
       setShowNewCategoryInput(false);
       setNewCategoryName('');
       setNewCategoryDescription('');
@@ -110,7 +122,7 @@ const EditProject = () => {
     }
   };
 
-  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setImageFile(e.target.files[0]);
       setForm((prev) => ({ ...prev, image_url: URL.createObjectURL(e.target.files![0]) }));
@@ -126,9 +138,7 @@ const EditProject = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('authToken');
-      await axios.delete(`http://localhost:3000/api/portfolio/${projectId}/images/${img.id}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
+      await adminApi.delete(`/portfolio/${projectId}/images/${img.id}`);
       setProjectImages((prev) => prev.filter((i) => i.id !== img.id));
       setSuccess('Image deleted successfully!');
     } catch (err: any) {
@@ -154,7 +164,7 @@ const EditProject = () => {
         formData.append('image', imageFile);
       }
       const token = localStorage.getItem('authToken');
-      await axios.put(`http://localhost:3000/api/portfolio/${projectId}`, formData, {
+      await adminApi.put(`/portfolio/${projectId}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -201,7 +211,7 @@ const EditProject = () => {
               <label className="block font-semibold mb-1">Category</label>
               <select name="category" value={form.category} onChange={handleChange} required className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
                 <option value="">Select Category</option>
-                {categories.map((cat) => (
+                {categories.map((cat: any) => (
                   <option key={cat.id} value={cat.slug}>{cat.name}</option>
                 ))}
                 <option value="create_new">+ Create new category</option>

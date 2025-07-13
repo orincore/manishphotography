@@ -2,18 +2,17 @@ import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Section from '../components/common/Section';
-import portfolioService, { PortfolioCategory, PortfolioProject, fetchCategoryBySnug } from '../services/portfolioService';
+// import portfolioService from '../services/portfolioService';
+// import { PortfolioCategory, PortfolioProject } from '../types';
 
 const Portfolio = () => {
-  const [categories, setCategories] = useState<PortfolioCategory[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [categoryMedia, setCategoryMedia] = useState<Record<string, { type: 'image' | 'video', src: string, poster?: string }>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [categoryThumbnails, setCategoryThumbnails] = useState<Record<string, string>>({});
-  const [categoryProjectImages, setCategoryProjectImages] = useState<Record<string, string[]>>({});
   const shuffleIntervalRef = useRef<number | null>(null);
 
   useEffect(() => {
-    // Update page title
     document.title = 'Portfolio - Manish Photography';
   }, []);
 
@@ -22,66 +21,103 @@ const Portfolio = () => {
       try {
         setLoading(true);
         setError(null);
-        
-        const response = await portfolioService.getCategories();
-        setCategories(response.categories);
-        // For each category, fetch its projects and store all image_urls
-        const thumbMap: Record<string, string> = {};
-        const projectImagesMap: Record<string, string[]> = {};
-        await Promise.all(
-          response.categories.map(async (cat: PortfolioCategory) => {
-            try {
-              const res = await fetchCategoryBySnug(cat.slug);
-              let projects: PortfolioProject[] = [];
-              if ('projects' in res && Array.isArray(res.projects)) {
-                projects = res.projects;
+        const response = await fetch('http://localhost:3000/api/portfolio/categories');
+        if (!response.ok) throw new Error('Failed to fetch categories');
+        const data = await response.json();
+        if (data && Array.isArray(data.projects)) {
+          // Group projects by category
+          const categoryMap: Record<string, any[]> = {};
+          data.projects.forEach((project: any) => {
+            if (!categoryMap[project.category]) {
+              categoryMap[project.category] = [];
+            }
+            categoryMap[project.category].push(project);
+          });
+          // Create a list of categories with their first project as a representative
+          const categoriesList = Object.keys(categoryMap).map((catSlug) => {
+            const projects = categoryMap[catSlug];
+            const firstProject = projects[0];
+            return {
+              slug: catSlug,
+              name: firstProject.category.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
+              description: firstProject.description || '',
+              projects,
+            };
+          });
+          setCategories(categoriesList);
+
+          // Set up preview for each category: prefer image_url, else video_url, else fallback
+          const mediaMap: Record<string, { type: 'image' | 'video', src: string }> = {};
+          categoriesList.forEach((cat) => {
+            // Find the first project with an image_url
+            const imageProject = cat.projects.find((p: any) => p.image_url);
+            if (imageProject && imageProject.image_url) {
+              mediaMap[cat.slug] = { type: 'image', src: imageProject.image_url };
+            } else {
+              // If no image, find the first project with a video_url (either direct or in videos array)
+              let videoUrl = null;
+              let found = false;
+              for (const p of cat.projects) {
+                if (p.video_url) {
+                  videoUrl = p.video_url;
+                  found = true;
+                  break;
+                }
+                if (Array.isArray(p.videos) && p.videos.length > 0 && p.videos[0].video_url) {
+                  videoUrl = p.videos[0].video_url;
+                  found = true;
+                  break;
+                }
               }
-              if (projects.length > 0) {
-                const images = projects.map(p => p.image_url).filter(Boolean);
-                projectImagesMap[cat.id] = images;
-                const randomIdx = Math.floor(Math.random() * images.length);
-                thumbMap[cat.id] = images[randomIdx] || '';
+              if (found && videoUrl) {
+                mediaMap[cat.slug] = { type: 'video', src: videoUrl };
+              } else {
+                mediaMap[cat.slug] = { type: 'image', src: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&h=600&fit=crop' };
               }
-            } catch {}
-          })
-        );
-        setCategoryThumbnails(thumbMap);
-        setCategoryProjectImages(projectImagesMap);
+            }
+          });
+          setCategoryMedia(mediaMap);
+        } else {
+          setCategories([]);
+          setCategoryMedia({});
+        }
       } catch (err: any) {
-        console.error('Error fetching categories:', err);
-        setError(err.response?.data?.message || 'Failed to load portfolio categories');
+        setError(err.message || 'Failed to load portfolio categories');
+        setCategories([]);
+        setCategoryMedia({});
       } finally {
         setLoading(false);
       }
     };
-
     fetchCategories();
   }, []);
 
-  // Shuffle thumbnails every 5 seconds
+  // Shuffle images every 5 seconds for image categories
   useEffect(() => {
-    if (Object.keys(categoryProjectImages).length === 0) return;
+    if (categories.length === 0) return;
     if (shuffleIntervalRef.current) window.clearInterval(shuffleIntervalRef.current);
     shuffleIntervalRef.current = window.setInterval(() => {
-      setCategoryThumbnails(prev => {
-        const newThumbs: Record<string, string> = { ...prev };
-        Object.entries(categoryProjectImages).forEach(([catId, images]) => {
-          if (images.length > 0) {
-            let newIdx = Math.floor(Math.random() * images.length);
+      setCategoryMedia((prev) => {
+        const newMedia: Record<string, { type: 'image' | 'video', src: string }> = { ...prev };
+        categories.forEach((cat) => {
+          // Only shuffle if not a video category
+          const imageProjects = cat.projects.filter((p: any) => p.image_url);
+          if (imageProjects.length > 0) {
+            let newIdx = Math.floor(Math.random() * imageProjects.length);
             // Avoid showing the same image as before
-            if (images.length > 1 && images[newIdx] === prev[catId]) {
-              newIdx = (newIdx + 1) % images.length;
+            if (imageProjects.length > 1 && imageProjects[newIdx].image_url === prev[cat.slug]?.src) {
+              newIdx = (newIdx + 1) % imageProjects.length;
             }
-            newThumbs[catId] = images[newIdx];
+            newMedia[cat.slug] = { type: 'image', src: imageProjects[newIdx].image_url };
           }
         });
-        return newThumbs;
+        return newMedia;
       });
     }, 5000);
     return () => {
       if (shuffleIntervalRef.current) window.clearInterval(shuffleIntervalRef.current);
     };
-  }, [categoryProjectImages]);
+  }, [categories]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -129,11 +165,6 @@ const Portfolio = () => {
     );
   }
 
-  // Filter categories to only those with at least one image
-  const categoriesWithImages = categories.filter(cat =>
-    categoryProjectImages[cat.id] && categoryProjectImages[cat.id].length > 0
-  );
-
   return (
     <div className="min-h-screen pt-24 pb-16">
       <Section title="Our Portfolio" subtitle="Explore our photography and cinematography work">
@@ -142,7 +173,7 @@ const Portfolio = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          {categoriesWithImages.length === 0 ? (
+          {categories.length === 0 ? (
             <div className="text-center py-12">
               <div className="max-w-md mx-auto">
                 <div className="text-gray-400 dark:text-gray-500 mb-4">
@@ -165,55 +196,60 @@ const Portfolio = () => {
               animate="visible"
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
             >
-              {categoriesWithImages.map((category) => (
-                <motion.div key={category.id} variants={itemVariants}>
-                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-shadow duration-300 group hover:shadow-2xl hover:scale-[1.03] hover:z-10 relative">
-                    <div className="aspect-[4/3] overflow-hidden">
-                      <img
-                        src={categoryThumbnails[category.id] || category.thumbnail_url || 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&h=600&fit=crop'}
-                        alt={category.name}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&h=600&fit=crop';
-                        }}
-                        style={{ willChange: 'transform' }}
-                      />
-                    </div>
-                    <div className="p-6">
-                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                        {category.name}
-                      </h3>
-                      <p className="text-gray-600 dark:text-gray-400 mb-4">
-                        {category.description}
-                      </p>
-                      {/* Subcategories Preview */}
-                      {category.portfolio_subcategories.length > 0 && (
-                        <div className="mb-4">
-                          <div className="flex flex-wrap gap-2 mb-3">
-                            {category.portfolio_subcategories.slice(0, 3).map((sub) => (
-                              <span key={sub.id} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                {sub.name}
-                              </span>
-                            ))}
-                            {category.portfolio_subcategories.length > 3 && (
-                              <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
-                                +{category.portfolio_subcategories.length - 3} more
-                              </span>
-                            )}
+              {categories.map((category) => {
+                const media = categoryMedia[category.slug];
+                return (
+                  <motion.div key={category.slug} variants={itemVariants}>
+                    <Link to={`/portfolio/${category.slug}`}>
+                      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-shadow duration-300 group hover:shadow-2xl hover:scale-[1.03] hover:z-10 relative">
+                        <div className="aspect-[4/3] md:aspect-[4/3] aspect-auto overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                          {media && media.type === 'video' ? (
+                            <video
+                              src={media.src}
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 max-h-80 max-w-full rounded"
+                              style={{ aspectRatio: '4/3', objectFit: 'cover', background: '#f3f4f6' }}
+                              muted
+                              loop
+                              playsInline
+                              preload="metadata"
+                              onMouseOver={e => (e.currentTarget as HTMLVideoElement).play()}
+                              onMouseOut={e => (e.currentTarget as HTMLVideoElement).pause()}
+                            />
+                          ) : (
+                            <img
+                              src={media?.src}
+                              alt={category.name}
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 max-h-80 max-w-full rounded"
+                              style={{ aspectRatio: '4/3', objectFit: 'cover', background: '#f3f4f6' }}
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&h=600&fit=crop';
+                              }}
+                            />
+                          )}
+                        </div>
+                        <div className="p-6">
+                          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                            {category.name}
+                          </h3>
+                          <p className="text-gray-600 dark:text-gray-400 mb-4">
+                            {category.description}
+                          </p>
+                          <div className="mb-4">
+                            <div className="flex flex-wrap gap-2 mb-3">
+                              {category.projects.slice(0, 3).map((proj: any) => (
+                                <span key={proj.id} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                  {proj.title}
+                                </span>
+                              ))}
+                            </div>
                           </div>
                         </div>
-                      )}
-                      <Link 
-                        to={`/portfolio/${category.slug}`}
-                        className="inline-block w-full text-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                      >
-                        View Category
-                      </Link>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
+                      </div>
+                    </Link>
+                  </motion.div>
+                );
+              })}
             </motion.div>
           )}
         </motion.div>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -12,10 +12,47 @@ import {
   TrendingUp,
   Eye,
   Plus,
-  Edit
+  Edit,
+  RefreshCw
 } from 'lucide-react';
+import feedbackService, { FeedbackStats } from '../../services/feedbackService';
+import contactService, { ContactStats } from '../../services/contactService';
+import { showNotification } from '../../utils/notifications';
 
 const SimpleAdminDashboard = () => {
+  const [stats, setStats] = useState<{
+    feedback: FeedbackStats | null;
+    contacts: ContactStats | null;
+  }>({
+    feedback: null,
+    contacts: null
+  });
+  const [loading, setLoading] = useState(true);
+
+  const loadStats = async () => {
+    try {
+      setLoading(true);
+      const [feedbackResponse, contactResponse] = await Promise.all([
+        feedbackService.getFeedbackStatsAdmin().catch(() => null),
+        contactService.getContactStats().catch(() => null)
+      ]);
+      
+      setStats({
+        feedback: feedbackResponse?.stats || null,
+        contacts: contactResponse?.stats || null
+      });
+    } catch (error) {
+      console.error('Error loading dashboard stats:', error);
+      showNotification('Error loading dashboard statistics', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadStats();
+  }, []);
+
   const quickActions = [
     {
       title: 'Add Category',
@@ -44,6 +81,20 @@ const SimpleAdminDashboard = () => {
       icon: MessageSquare,
       path: '/admin/feedback',
       color: 'bg-orange-500'
+    },
+    {
+      title: 'View Contacts',
+      description: 'Manage contact submissions',
+      icon: Mail,
+      path: '/admin/contacts',
+      color: 'bg-pink-500'
+    },
+    {
+      title: 'Homepage Elements',
+      description: 'Manage homepage content',
+      icon: BarChart3,
+      path: '/admin/homepage',
+      color: 'bg-indigo-500'
     }
   ];
 
@@ -78,13 +129,25 @@ const SimpleAdminDashboard = () => {
     <div className="space-y-6">
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 text-white">
-        <h1 className="text-2xl font-bold mb-2">Welcome back, Admin!</h1>
-        <p className="text-blue-100">
-          Here's what's happening with your portfolio today.
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold mb-2">Welcome back, Admin!</h1>
+            <p className="text-blue-100">
+              Here's what's happening with your portfolio today.
+            </p>
+          </div>
+          <button
+            onClick={loadStats}
+            disabled={loading}
+            className="flex items-center px-4 py-2 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw size={16} className={`mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+        </div>
       </div>
 
-      {/* Stats Grid - Static Data */}
+      {/* Stats Grid - Dynamic Data */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between">
@@ -93,7 +156,7 @@ const SimpleAdminDashboard = () => {
                 Total Categories
               </p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                5
+                {loading ? '...' : '5'}
               </p>
               <div className="flex items-center mt-2">
                 <TrendingUp size={16} className="text-green-600 dark:text-green-400 mr-1" />
@@ -115,7 +178,7 @@ const SimpleAdminDashboard = () => {
                 Total Subcategories
               </p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                12
+                {loading ? '...' : '12'}
               </p>
               <div className="flex items-center mt-2">
                 <TrendingUp size={16} className="text-green-600 dark:text-green-400 mr-1" />
@@ -137,7 +200,7 @@ const SimpleAdminDashboard = () => {
                 Total Projects
               </p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                48
+                {loading ? '...' : '48'}
               </p>
               <div className="flex items-center mt-2">
                 <TrendingUp size={16} className="text-green-600 dark:text-green-400 mr-1" />
@@ -159,7 +222,7 @@ const SimpleAdminDashboard = () => {
                 Total Views
               </p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                1,234
+                {loading ? '...' : '1,234'}
               </p>
               <div className="flex items-center mt-2">
                 <TrendingUp size={16} className="text-green-600 dark:text-green-400 mr-1" />
@@ -181,12 +244,12 @@ const SimpleAdminDashboard = () => {
                 Feedback
               </p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                23
+                {loading ? '...' : (stats.feedback?.totalFeedback || 0)}
               </p>
               <div className="flex items-center mt-2">
                 <TrendingUp size={16} className="text-green-600 dark:text-green-400 mr-1" />
                 <span className="text-sm font-medium text-green-600 dark:text-green-400">
-                  +3
+                  {stats.feedback?.averageRating ? `${stats.feedback.averageRating.toFixed(1)} avg` : 'N/A'}
                 </span>
               </div>
             </div>
@@ -203,12 +266,12 @@ const SimpleAdminDashboard = () => {
                 Contacts
               </p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                7
+                {loading ? '...' : (stats.contacts?.totalContacts || 0)}
               </p>
               <div className="flex items-center mt-2">
-                <TrendingUp size={16} className="text-green-600 dark:text-green-400 mr-1" />
-                <span className="text-sm font-medium text-green-600 dark:text-green-400">
-                  +1
+                <TrendingUp size={16} className="text-red-600 dark:text-red-400 mr-1" />
+                <span className="text-sm font-medium text-red-600 dark:text-red-400">
+                  {stats.contacts?.unreadContacts ? `${stats.contacts.unreadContacts} unread` : 'N/A'}
                 </span>
               </div>
             </div>
@@ -230,7 +293,7 @@ const SimpleAdminDashboard = () => {
           </p>
         </div>
         <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {quickActions.map((action, index) => {
               const Icon = action.icon;
               return (

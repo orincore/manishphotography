@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { fetchPublishedProjects, PortfolioProject } from '../../services/portfolioService';
+import { fetchPublishedProjects } from '../../services/portfolioService';
 import adminService from '../../services/adminService';
 import { Link } from 'react-router-dom';
 import { Edit, Trash2, Plus, Search } from 'lucide-react';
 
 const ProjectsList = () => {
-  const [projects, setProjects] = useState<PortfolioProject[]>([]);
+  const [projects, setProjects] = useState<any[]>([]); // Changed type to any[] as PortfolioProject is removed
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -40,6 +40,17 @@ const ProjectsList = () => {
   const filteredProjects = projects.filter((p) =>
     p.title.toLowerCase().includes(search.toLowerCase())
   );
+
+  // Helper to get preview for a project
+  const getProjectPreview = (project: any) => {
+    if (project.image_url) {
+      return { type: 'image', src: project.image_url };
+    } else if (Array.isArray(project.videos) && project.videos.length > 0 && project.videos[0].video_url) {
+      return { type: 'video', src: project.videos[0].video_url };
+    } else {
+      return { type: 'image', src: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&h=600&fit=crop' };
+    }
+  };
 
   if (loading) {
     return <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>;
@@ -78,35 +89,47 @@ const ProjectsList = () => {
       <div className="block md:hidden">
         {/* Mobile: Card Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {filteredProjects.map((project) => (
-            <div key={project.id} className="bg-white dark:bg-gray-900 rounded-xl shadow-md overflow-hidden flex flex-col hover:shadow-xl transition-shadow duration-300">
-              {project.thumbnail_url || project.image_url ? (
-                <img
-                  src={project.thumbnail_url || project.image_url}
-                  alt={project.title}
-                  className="w-full h-40 object-cover"
-                />
-              ) : (
-                <div className="w-full h-40 flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-400">No Image</div>
-              )}
-              <div className="p-4 flex-1 flex flex-col">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate mb-1">{project.title}</h3>
-                <p className="text-gray-600 dark:text-gray-400 text-sm truncate mb-2">{project.category}</p>
-                <div className="flex-1" />
-                <div className="flex items-center justify-between mt-2">
-                  <span className={`text-xs px-2 py-1 rounded ${project.is_published ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{project.is_published ? 'Published' : 'Draft'}</span>
-                  <div className="flex gap-2 items-center">
-                    <Link to={`/admin/projects/edit/${project.id}`} className="flex items-center justify-center p-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/30 active:scale-95 transition-all shadow-sm">
-                      <Edit size={18} />
-                    </Link>
-                    <button onClick={() => deleteProject(project.id)} className="flex items-center justify-center p-2 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-full hover:bg-red-200 dark:hover:bg-red-900/40 active:scale-95 transition-all shadow-sm">
-                      <Trash2 size={18} />
-                    </button>
+          {filteredProjects.map((project) => {
+            const preview = getProjectPreview(project);
+            return (
+              <div key={project.id} className="bg-white dark:bg-gray-900 rounded-xl shadow-md overflow-hidden flex flex-col hover:shadow-xl transition-shadow duration-300">
+                {preview.type === 'video' ? (
+                  <video
+                    src={preview.src}
+                    className="w-full h-40 object-cover"
+                    muted
+                    loop
+                    playsInline
+                    preload="metadata"
+                    onMouseOver={e => (e.currentTarget as HTMLVideoElement).play()}
+                    onMouseOut={e => (e.currentTarget as HTMLVideoElement).pause()}
+                  />
+                ) : (
+                  <img
+                    src={preview.src}
+                    alt={project.title}
+                    className="w-full h-40 object-cover"
+                  />
+                )}
+                <div className="p-4 flex-1 flex flex-col">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate mb-1">{project.title}</h3>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm truncate mb-2">{project.category}</p>
+                  <div className="flex-1" />
+                  <div className="flex items-center justify-between mt-2">
+                    <span className={`text-xs px-2 py-1 rounded ${project.is_published ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{project.is_published ? 'Published' : 'Draft'}</span>
+                    <div className="flex gap-2 items-center">
+                      <Link to={`/admin/projects/edit/${project.id}`} className="flex items-center justify-center p-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/30 active:scale-95 transition-all shadow-sm">
+                        <Edit size={18} />
+                      </Link>
+                      <button onClick={() => deleteProject(project.id)} className="flex items-center justify-center p-2 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-full hover:bg-red-200 dark:hover:bg-red-900/40 active:scale-95 transition-all shadow-sm">
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -124,36 +147,48 @@ const ProjectsList = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredProjects.map((project) => (
-                <tr key={project.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900/40 transition-colors">
-                  <td className="px-4 py-2">
-                    {project.thumbnail_url || project.image_url ? (
-                      <img
-                        src={project.thumbnail_url || project.image_url}
-                        alt={project.title}
-                        className="w-20 h-16 object-cover rounded shadow"
-                      />
-                    ) : (
-                      <span className="text-gray-400">No Image</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-2 font-medium text-gray-900 dark:text-white max-w-xs truncate">{project.title}</td>
-                  <td className="px-4 py-2 text-gray-700 dark:text-gray-300 max-w-xs truncate">{project.category}</td>
-                  <td className="px-4 py-2 text-gray-700 dark:text-gray-300">
-                    <span className={`text-xs px-2 py-1 rounded ${project.is_published ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{project.is_published ? 'Published' : 'Draft'}</span>
-                  </td>
-                  <td className="px-4 py-2">
-                    <div className="flex gap-2 items-center justify-center">
-                      <Link to={`/admin/projects/edit/${project.id}`} className="flex items-center justify-center p-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/30 active:scale-95 transition-all shadow-sm">
-                        <Edit size={18} />
-                      </Link>
-                      <button onClick={() => deleteProject(project.id)} className="flex items-center justify-center p-2 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-full hover:bg-red-200 dark:hover:bg-red-900/40 active:scale-95 transition-all shadow-sm">
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {filteredProjects.map((project) => {
+                const preview = getProjectPreview(project);
+                return (
+                  <tr key={project.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900/40 transition-colors">
+                    <td className="px-4 py-2">
+                      {preview.type === 'video' ? (
+                        <video
+                          src={preview.src}
+                          className="w-20 h-16 object-cover rounded shadow"
+                          muted
+                          loop
+                          playsInline
+                          preload="metadata"
+                          onMouseOver={e => (e.currentTarget as HTMLVideoElement).play()}
+                          onMouseOut={e => (e.currentTarget as HTMLVideoElement).pause()}
+                        />
+                      ) : (
+                        <img
+                          src={preview.src}
+                          alt={project.title}
+                          className="w-20 h-16 object-cover rounded shadow"
+                        />
+                      )}
+                    </td>
+                    <td className="px-4 py-2 font-medium text-gray-900 dark:text-white max-w-xs truncate">{project.title}</td>
+                    <td className="px-4 py-2 text-gray-700 dark:text-gray-300 max-w-xs truncate">{project.category}</td>
+                    <td className="px-4 py-2 text-gray-700 dark:text-gray-300">
+                      <span className={`text-xs px-2 py-1 rounded ${project.is_published ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{project.is_published ? 'Published' : 'Draft'}</span>
+                    </td>
+                    <td className="px-4 py-2">
+                      <div className="flex gap-2 items-center justify-center">
+                        <Link to={`/admin/projects/edit/${project.id}`} className="flex items-center justify-center p-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/30 active:scale-95 transition-all shadow-sm">
+                          <Edit size={18} />
+                        </Link>
+                        <button onClick={() => deleteProject(project.id)} className="flex items-center justify-center p-2 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-full hover:bg-red-200 dark:hover:bg-red-900/40 active:scale-95 transition-all shadow-sm">
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

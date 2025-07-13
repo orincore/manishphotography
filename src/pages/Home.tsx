@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import Hero from '../components/home/Hero';
 import FeaturedWork from '../components/home/FeaturedWork';
 import Testimonials from '../components/home/Testimonials';
-import InstagramFeed from '../components/home/InstagramFeed';
 import CallToAction from '../components/home/CallToAction';
 
 const Home = () => {
@@ -16,7 +15,6 @@ const Home = () => {
       <Hero />
       <FeaturedWork />
       <Testimonials />
-      <InstagramFeed />
       <CallToAction />
     </div>
   );
