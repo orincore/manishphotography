@@ -20,6 +20,7 @@ export default defineConfig({
         target: 'https://api.manishbosephotography.com',
         changeOrigin: true,
         timeout: 1800000, // 30 minutes for large uploads
+        secure: true,
       },
     },
   },

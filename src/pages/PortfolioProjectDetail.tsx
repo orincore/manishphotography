@@ -6,6 +6,7 @@ import Section from '../components/common/Section';
 import PortfolioMediaGallery from '../components/portfolio/PortfolioMediaGallery';
 import portfolioService from '../services/portfolioService';
 import { PortfolioProject } from '../types';
+import config from '../config';
 
 const PortfolioProjectDetail: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -15,6 +16,7 @@ const PortfolioProjectDetail: React.FC = () => {
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
 
   useEffect(() => {
+    console.log('PortfolioProjectDetail mounted with projectId:', projectId);
     if (projectId) {
       fetchProject();
     }
@@ -25,14 +27,24 @@ const PortfolioProjectDetail: React.FC = () => {
       setLoading(true);
       setError(null);
       
+      console.log('Fetching project with ID:', projectId);
+      console.log('API URL:', `${config.api.baseURL}/portfolio/project/${projectId}`);
+      
       const projectData = await portfolioService.getProject(projectId!);
+      console.log('Project data received:', projectData);
       setProject(projectData);
       
       // Update page title
       document.title = `${projectData.title} - Manish Photography`;
     } catch (err: any) {
       console.error('Error fetching project:', err);
-      setError(err.response?.data?.message || 'Failed to load project');
+      console.error('Error details:', {
+        status: err.response?.status,
+        statusText: err.response?.statusText,
+        data: err.response?.data,
+        message: err.message
+      });
+      setError(err.response?.data?.message || err.message || 'Failed to load project');
     } finally {
       setLoading(false);
     }

@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Section from '../components/common/Section';
+import config from '../config';
 // import portfolioService from '../services/portfolioService';
 // import { PortfolioCategory, PortfolioProject } from '../types';
 
@@ -21,7 +22,7 @@ const Portfolio = () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch('https://api.manishbosephotography.com/api/portfolio/categories');
+        const response = await fetch(`${config.api.baseURL}/portfolio/categories`);
         if (!response.ok) throw new Error('Failed to fetch categories');
         const data = await response.json();
         if (data && Array.isArray(data.projects)) {

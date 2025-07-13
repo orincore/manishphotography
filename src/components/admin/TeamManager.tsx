@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import teamService, { TeamMember } from '../../services/teamService';
+import api from '../../services/api';
 import Card from '../common/Card';
-
-const API_BASE = '/api/team';
 
 const getToken = () => localStorage.getItem('authToken');
 
@@ -24,9 +23,8 @@ const TeamManager: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}`);
-      const data = await res.json();
-      setMembers(data.members.sort((a: TeamMember, b: TeamMember) => a.order_index - b.order_index));
+      const data = await teamService.getTeamMembers();
+      setMembers(data.sort((a: TeamMember, b: TeamMember) => a.order_index - b.order_index));
     } catch (e) {
       setError('Failed to fetch team members.');
     } finally {
@@ -76,8 +74,7 @@ const TeamManager: React.FC = () => {
     if (!window.confirm('Delete this team member?')) return;
     setSubmitting(true);
     try {
-      await fetch(`${API_BASE}/${id}`, {
-        method: 'DELETE',
+      await api.delete(`/team/${id}`, {
         headers: { Authorization: `Bearer ${getToken()}` },
       });
       fetchMembers();
@@ -106,16 +103,18 @@ const TeamManager: React.FC = () => {
     if (form.photo) formData.append('photo', form.photo);
     try {
       if (editing) {
-        await fetch(`${API_BASE}/${editing.id}`, {
-          method: 'PUT',
-          headers: { Authorization: `Bearer ${getToken()}` },
-          body: formData,
+        await api.put(`/team/${editing.id}`, formData, {
+          headers: { 
+            Authorization: `Bearer ${getToken()}`,
+            'Content-Type': 'multipart/form-data'
+          },
         });
       } else {
-        await fetch(`${API_BASE}`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${getToken()}` },
-          body: formData,
+        await api.post('/team', formData, {
+          headers: { 
+            Authorization: `Bearer ${getToken()}`,
+            'Content-Type': 'multipart/form-data'
+          },
         });
       }
       fetchMembers();

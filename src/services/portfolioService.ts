@@ -102,7 +102,7 @@ class PortfolioService {
 
   // Get project by ID with all media
   async getProject(projectId: string): Promise<PortfolioProject> {
-    const response = await api.get<{ project: PortfolioProject }>(`/portfolio/${projectId}`);
+    const response = await api.get<{ project: PortfolioProject }>(`/portfolio/project/${projectId}`);
     return response.data.project;
   }
 

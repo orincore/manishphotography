@@ -13,33 +13,39 @@ import {
   Eye,
   Plus,
   Edit,
-  RefreshCw
+  RefreshCw,
+  Users
 } from 'lucide-react';
 import feedbackService, { FeedbackStats } from '../../services/feedbackService';
 import contactService, { ContactStats } from '../../services/contactService';
+import teamService, { TeamStats } from '../../services/teamService';
 import { showNotification } from '../../utils/notifications';
 
 const SimpleAdminDashboard = () => {
   const [stats, setStats] = useState<{
     feedback: FeedbackStats | null;
     contacts: ContactStats | null;
+    team: TeamStats | null;
   }>({
     feedback: null,
-    contacts: null
+    contacts: null,
+    team: null
   });
   const [loading, setLoading] = useState(true);
 
   const loadStats = async () => {
     try {
       setLoading(true);
-      const [feedbackResponse, contactResponse] = await Promise.all([
+      const [feedbackResponse, contactResponse, teamResponse] = await Promise.all([
         feedbackService.getFeedbackStatsAdmin().catch(() => null),
-        contactService.getContactStats().catch(() => null)
+        contactService.getContactStats().catch(() => null),
+        teamService.getTeamStats().catch(() => null)
       ]);
       
       setStats({
         feedback: feedbackResponse?.stats || null,
-        contacts: contactResponse?.stats || null
+        contacts: contactResponse?.stats || null,
+        team: teamResponse || null
       });
     } catch (error) {
       console.error('Error loading dashboard stats:', error);
@@ -95,6 +101,13 @@ const SimpleAdminDashboard = () => {
       icon: BarChart3,
       path: '/admin/homepage',
       color: 'bg-indigo-500'
+    },
+    {
+      title: 'Team Management',
+      description: 'Manage team members',
+      icon: Users,
+      path: '/admin/team',
+      color: 'bg-teal-500'
     }
   ];
 
@@ -277,6 +290,28 @@ const SimpleAdminDashboard = () => {
             </div>
             <div className="p-3 rounded-lg bg-pink-500 text-white">
               <Mail size={24} />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                Team Members
+              </p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {loading ? '...' : (stats.team?.totalMembers || 0)}
+              </p>
+              <div className="flex items-center mt-2">
+                <TrendingUp size={16} className="text-green-600 dark:text-green-400 mr-1" />
+                <span className="text-sm font-medium text-green-600 dark:text-green-400">
+                  {stats.team?.activeMembers ? `${stats.team.activeMembers} active` : 'N/A'}
+                </span>
+              </div>
+            </div>
+            <div className="p-3 rounded-lg bg-teal-500 text-white">
+              <Users size={24} />
             </div>
           </div>
         </div>

@@ -55,9 +55,9 @@ const AppRoutes = () => {
           <Route path="/" element={<MainLayout><Home /></MainLayout>} />
           <Route path="/portfolio" element={<MainLayout><Portfolio /></MainLayout>} />
           <Route path="/portfolio/project/:projectId" element={<MainLayout><PortfolioProjectDetail /></MainLayout>} />
-          <Route path="/portfolio/:categorySlug" element={<MainLayout><CategoryPage /></MainLayout>} />
-          <Route path="/portfolio/:categorySlug/:subcategorySlug" element={<MainLayout><PortfolioNew /></MainLayout>} />
           <Route path="/portfolio/:categorySlug/:subcategorySlug/:projectSlug" element={<MainLayout><PortfolioProjectDetail /></MainLayout>} />
+          <Route path="/portfolio/:categorySlug/:subcategorySlug" element={<MainLayout><PortfolioNew /></MainLayout>} />
+          <Route path="/portfolio/:categorySlug" element={<MainLayout><CategoryPage /></MainLayout>} />
           <Route path="/about" element={<MainLayout><About /></MainLayout>} />
           <Route path="/contact" element={<MainLayout><Contact /></MainLayout>} />
           <Route path="/faq" element={<MainLayout><FAQ /></MainLayout>} />

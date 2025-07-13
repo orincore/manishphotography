@@ -17,10 +17,25 @@ export interface TeamResponse {
   members: TeamMember[];
 }
 
+export interface TeamStats {
+  totalMembers: number;
+  activeMembers: number;
+  inactiveMembers: number;
+}
+
 const teamService = {
   async getTeamMembers(): Promise<TeamMember[]> {
     const response = await api.get<TeamResponse>('/team');
     return response.data.members;
+  },
+
+  async getTeamStats(): Promise<TeamStats> {
+    const members = await this.getTeamMembers();
+    return {
+      totalMembers: members.length,
+      activeMembers: members.filter(m => m.is_active).length,
+      inactiveMembers: members.filter(m => !m.is_active).length,
+    };
   },
 };
 
