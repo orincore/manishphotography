@@ -5,6 +5,7 @@
     "/**": "index.html"
   },
   "https_only": true,
+  "force_https": true,
   "headers": {
     "/**": {
       "X-Content-Type-Options": "nosniff",

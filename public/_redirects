@@ -1,2 +1,5 @@
+# Redirect www to non-www (only if not already on non-www)
+https://www.manishbosephotography.com/* https://manishbosephotography.com/:splat 301!
+
 # Handle SPA routing - this should be the last rule
 /*    /index.html   200 
