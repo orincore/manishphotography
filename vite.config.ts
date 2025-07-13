@@ -17,7 +17,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: 'https://api.manishbosephotography.com',
         changeOrigin: true,
         timeout: 1800000, // 30 minutes for large uploads
       },

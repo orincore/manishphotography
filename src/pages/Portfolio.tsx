@@ -21,7 +21,7 @@ const Portfolio = () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch('http://localhost:3000/api/portfolio/categories');
+        const response = await fetch('https://api.manishbosephotography.com/api/portfolio/categories');
         if (!response.ok) throw new Error('Failed to fetch categories');
         const data = await response.json();
         if (data && Array.isArray(data.projects)) {

@@ -12,7 +12,7 @@ This document outlines how the frontend React application integrates with the ba
 2. **Environment Variables**
    Create a `.env` file in the root directory:
    ```env
-   VITE_API_BASE_URL=http://localhost:3001/api
+   VITE_API_BASE_URL=https://api.manishbosephotography.com/api
    ```
 
 3. **Start Development Server**

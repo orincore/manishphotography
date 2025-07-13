@@ -78,11 +78,11 @@
 ### Environment Variables
 Create a `.env` file in the project root:
 ```env
-VITE_API_BASE_URL=http://localhost:3001/api
+VITE_API_BASE_URL=https://api.manishbosephotography.com/api
 ```
 
 ### Backend Requirements
-Ensure your backend server is running on `http://localhost:3001` with the following endpoints:
+Ensure your backend server is running on `https://api.manishbosephotography.com` with the following endpoints:
 
 #### Authentication
 - `POST /api/auth/register`

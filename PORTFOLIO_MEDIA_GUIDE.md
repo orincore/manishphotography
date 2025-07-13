@@ -471,7 +471,7 @@ All components support dark mode with appropriate color schemes:
 
 ```env
 # API Configuration
-VITE_API_BASE_URL=http://localhost:3001/api
+VITE_API_BASE_URL=https://api.manishbosephotography.com/api
 
 # Upload Configuration
 VITE_MAX_VIDEO_SIZE=500000000  # 500MB
@@ -487,7 +487,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: 'https://api.manishbosephotography.com',
         changeOrigin: true,
         timeout: 1800000, // 30 minutes for large uploads
       },

@@ -141,13 +141,13 @@ useEffect(() => {
 ### Environment Variables
 
 ```env
-VITE_API_URL=http://localhost:3000
+VITE_API_URL=https://api.manishbosephotography.com
 ```
 
 ### Socket.IO Settings
 
 ```typescript
-const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:3000', {
+const socket = io(import.meta.env.VITE_API_URL || 'https://api.manishbosephotography.com', {
   transports: ['websocket', 'polling'],
   timeout: 20000,
   reconnection: true,
@@ -237,7 +237,7 @@ const io = new Server(server, {
 });
 
 // Frontend
-const socket = io('http://localhost:3000', {
+const socket = io('https://api.manishbosephotography.com', {
   debug: true
 });
 ```

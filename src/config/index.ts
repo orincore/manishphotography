@@ -2,13 +2,13 @@
 export const config = {
   // API Configuration
   api: {
-    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api',
+    baseURL: import.meta.env.VITE_API_BASE_URL || 'https://api.manishbosephotography.com/api',
     timeout: 1800000, // 30 minutes for video uploads
   },
   
   // Socket.IO Configuration
   socket: {
-    url: import.meta.env.VITE_API_URL || 'http://localhost:3000',
+    url: import.meta.env.VITE_API_URL || 'https://api.manishbosephotography.com',
     options: {
       transports: ['websocket', 'polling'],
       timeout: 20000,

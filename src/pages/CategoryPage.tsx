@@ -28,7 +28,7 @@ const CategoryPage = () => {
         setCategory(null);
         setProjects([]);
         // Use the correct endpoint for a single category
-        const response = await fetch(`http://localhost:3000/api/portfolio/categories/${categorySlug}`);
+        const response = await fetch(`https://api.manishbosephotography.com/api/portfolio/categories/${categorySlug}`);
         if (!response.ok) throw new Error('Category not found or no images available');
         const data = await response.json();
         // The API returns { message, snug, projects }

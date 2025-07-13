@@ -10,16 +10,16 @@ Create a `.env` file in your project root with the following variables:
 
 ```env
 # API Configuration
-VITE_API_BASE_URL=http://localhost:3000/api
-VITE_API_URL=http://localhost:3000
+VITE_API_BASE_URL=https://api.manishbosephotography.com/api
+VITE_API_URL=https://api.manishbosephotography.com
 ```
 
 ### For Different Environments
 
 **Development:**
 ```env
-VITE_API_BASE_URL=http://localhost:3000/api
-VITE_API_URL=http://localhost:3000
+VITE_API_BASE_URL=https://api.manishbosephotography.com/api
+VITE_API_URL=https://api.manishbosephotography.com
 ```
 
 **Production:**
