@@ -141,26 +141,41 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({
                         background: '#f3f4f6',
                       }}
                     >
-                      <img
-                        src={project.thumbnail_url || project.image_url}
-                        alt={project.title}
-                        className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-                        onLoad={e => {
-                          const img = e.currentTarget;
-                          if (img.naturalWidth && img.naturalHeight) {
-                            setAspectRatios(prev =>
-                              prev[project.id] !== img.naturalWidth / img.naturalHeight
-                                ? { ...prev, [project.id]: img.naturalWidth / img.naturalHeight }
-                                : prev
-                            );
-                          }
-                        }}
-                        onError={e => {
-                          const target = e.currentTarget as HTMLImageElement;
-                          target.src = 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400&h=300&fit=crop';
-                        }}
-                        style={{ background: '#f3f4f6' }}
-                      />
+                      {project.videos && project.videos.length > 0 ? (
+                        <video
+                          src={project.videos[0].video_url}
+                          poster={project.videos[0].video_thumbnail_url || project.thumbnail_url || project.image_url}
+                          className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                          muted
+                          loop
+                          playsInline
+                          preload="metadata"
+                          onMouseOver={e => e.currentTarget.play()}
+                          onMouseOut={e => { e.currentTarget.pause(); e.currentTarget.currentTime = 0; }}
+                          style={{ background: '#f3f4f6', maxHeight: '350px', maxWidth: '100%' }}
+                        />
+                      ) : (
+                        <img
+                          src={project.thumbnail_url || project.image_url}
+                          alt={project.title}
+                          className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                          onLoad={e => {
+                            const img = e.currentTarget;
+                            if (img.naturalWidth && img.naturalHeight) {
+                              setAspectRatios(prev =>
+                                prev[project.id] !== img.naturalWidth / img.naturalHeight
+                                  ? { ...prev, [project.id]: img.naturalWidth / img.naturalHeight }
+                                  : prev
+                              );
+                            }
+                          }}
+                          onError={e => {
+                            const target = e.currentTarget as HTMLImageElement;
+                            target.src = 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400&h=300&fit=crop';
+                          }}
+                          style={{ background: '#f3f4f6' }}
+                        />
+                      )}
                       <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white bg-opacity-90 rounded-full p-3">
                           <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">

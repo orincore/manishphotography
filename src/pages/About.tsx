@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 import Card from '../components/common/Card';
 import teamService, { TeamMember } from '../services/teamService';
 import homepageService, { HomepageElement } from '../services/homepageService';
+import logoImg from '../Assets/logo/IMG_0040.JPG';
 
 // Type assertion for Card to allow subcomponent access
 const CardAny = Card as any;
@@ -55,7 +56,7 @@ const About = () => {
   return (
     <div className="min-h-screen pt-20">
       {/* Hero Section */}
-      <div className="relative h-[60vh] min-h-[400px] bg-cover bg-center flex items-center" style={{backgroundImage: 'url(https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg)'}}>
+      <div className="relative h-[60vh] min-h-[400px] bg-cover bg-center flex items-center" style={{backgroundImage: `url(${logoImg})`}}>
         <div className="absolute inset-0 bg-black bg-opacity-50"></div>
         <div className="container mx-auto px-4 relative z-10 text-center text-white">
           <motion.h1 

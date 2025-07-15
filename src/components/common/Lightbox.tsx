@@ -142,7 +142,8 @@ const Lightbox: React.FC<LightboxProps> = ({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.3 }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-95"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-100"
+        style={{ width: '100vw', height: '100vh', margin: 0, padding: 0 }}
         onClick={(e) => {
           if (e.target === e.currentTarget) {
             onClose();
@@ -231,13 +232,19 @@ const Lightbox: React.FC<LightboxProps> = ({
             <img
               src={currentImage.src}
               alt={currentImage.alt}
-              className="max-w-full max-h-[80vh] object-contain select-none"
+              className="max-w-[100vw] max-h-[100vh] object-contain select-none"
               style={{
                 transform: `scale(${zoom}) rotate(${rotation}deg) translate(${dragOffset.x}px, ${dragOffset.y}px)`,
                 cursor: zoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default',
                 transition: isDragging ? 'none' : 'transform 0.2s ease-out',
+                margin: 0,
+                padding: 0,
+                display: 'block',
+                background: '#000',
+                userSelect: 'none',
               }}
               draggable={false}
+              onContextMenu={e => e.preventDefault()}
             />
           </motion.div>
         </div>

@@ -5,13 +5,9 @@ import Section from '../components/common/Section';
 import OfferCard from '../components/offers/OfferCard';
 import packageService, { Package } from '../services/packageService';
 import { OfferItem } from '../types';
+import logoImg from '../Assets/logo/IMG_0040.JPG';
 
-const packageImages = [
-  'https://images.pexels.com/photos/1616113/pexels-photo-1616113.jpeg',
-  'https://images.pexels.com/photos/1231365/pexels-photo-1231365.jpeg',
-  'https://images.pexels.com/photos/169198/pexels-photo-169198.jpeg',
-  'https://images.pexels.com/photos/3014856/pexels-photo-3014856.jpeg',
-];
+const packageImages = [logoImg, logoImg, logoImg, logoImg];
 
 const Offers = () => {
   const [offers, setOffers] = useState<OfferItem[]>([]);

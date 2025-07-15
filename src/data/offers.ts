@@ -1,4 +1,5 @@
 import { OfferItem } from '../types';
+import logoImg from '../Assets/logo/IMG_0040.JPG';
 
 export const offers: OfferItem[] = [
   {
@@ -7,7 +8,7 @@ export const offers: OfferItem[] = [
     description: 'Perfect for intimate weddings with essential coverage',
     price: 2500,
     discountedPrice: 2100,
-    image: 'https://images.pexels.com/photos/1616113/pexels-photo-1616113.jpeg',
+    image: logoImg,
     features: [
       '8 hours of photography coverage',
       '1 photographer',
@@ -23,7 +24,7 @@ export const offers: OfferItem[] = [
     description: 'Our most popular package for complete wedding day coverage',
     price: 4500,
     discountedPrice: 3800,
-    image: 'https://images.pexels.com/photos/1231365/pexels-photo-1231365.jpeg',
+    image: logoImg,
     features: [
       '12 hours of photography coverage',
       '2 photographers',
@@ -42,7 +43,7 @@ export const offers: OfferItem[] = [
     description: 'Comprehensive coverage for your destination wedding',
     price: 7500,
     discountedPrice: 6500,
-    image: 'https://images.pexels.com/photos/169198/pexels-photo-169198.jpeg',
+    image: logoImg,
     features: [
       '2 days of photography coverage',
       '2 photographers',
@@ -61,7 +62,7 @@ export const offers: OfferItem[] = [
     description: 'Capture your love story before the big day',
     price: 1200,
     discountedPrice: 950,
-    image: 'https://images.pexels.com/photos/3014856/pexels-photo-3014856.jpeg',
+    image: logoImg,
     features: [
       '4 hours of photography',
       '2 locations',
