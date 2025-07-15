@@ -21,7 +21,6 @@ const packageService = {
   // Get all packages
   async getAll() {
     const res = await api.get('/portfolio/packages');
-    console.log('Packages API response:', res.data);
     return res.data;
   },
 

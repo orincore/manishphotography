@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { videos } from '../../data/videos';
 import Section from '../common/Section';
 import Button from '../common/Button';
 import Lightbox from '../common/Lightbox';
-import portfolioService, { PortfolioProject } from '../../services/portfolioService';
+import portfolioService from '../../services/portfolioService';
+import { PortfolioProject } from '../../types';
 import { shuffle } from 'lodash';
 
 const FeaturedWork = () => {
@@ -23,6 +23,16 @@ const FeaturedWork = () => {
   }>>([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [randomImages, setRandomImages] = useState<Array<{ src: string; alt: string; title?: string; description?: string; projectId: string }>>([]);
+  const [realVideos, setRealVideos] = useState<Array<{
+    id: string;
+    projectId: string;
+    video_url: string;
+    video_thumbnail_url: string;
+    title?: string;
+    description?: string;
+  }>>([]);
+  const [loadingVideos, setLoadingVideos] = useState(false);
+  const [errorVideos, setErrorVideos] = useState<string | null>(null);
   
   useEffect(() => {
     const fetchFeaturedProjects = async () => {
@@ -82,8 +92,43 @@ const FeaturedWork = () => {
     if (activeTab === 'photos') fetchRandomImages();
   }, [activeTab]);
   
-  const featuredVideos = videos.filter(video => video.featured).slice(0, 3);
-
+  useEffect(() => {
+    if (activeTab !== 'videos') return;
+    setLoadingVideos(true);
+    setErrorVideos(null);
+    portfolioService.getPublishedProjects({ limit: 50 })
+      .then(response => {
+        // Flatten all videos from all projects
+        const allVideos: Array<{
+          id: string;
+          projectId: string;
+          video_url: string;
+          video_thumbnail_url: string;
+          title?: string;
+          description?: string;
+        }> = [];
+        response.projects.forEach((project: any) => {
+          if (Array.isArray(project.videos) && project.videos.length > 0) {
+            project.videos.forEach((vid: any) => {
+              allVideos.push({
+                id: vid.id,
+                projectId: project.id,
+                video_url: vid.video_url,
+                video_thumbnail_url: vid.video_thumbnail_url || vid.video_poster || '',
+                title: project.title,
+                description: project.description,
+              });
+            });
+          }
+        });
+        setRealVideos(allVideos.slice(0, 6)); // Show up to 6 videos
+      })
+      .catch(err => {
+        setErrorVideos(err?.response?.data?.message || 'Failed to load videos');
+      })
+      .finally(() => setLoadingVideos(false));
+  }, [activeTab]);
+  
   const openLightbox = (projectIndex: number) => {
     if (featuredProjects.length === 0) return;
     
@@ -162,8 +207,7 @@ const FeaturedWork = () => {
           <motion.div
             variants={containerVariants}
             initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-100px' }}
+            animate="visible"
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6"
           >
             {loading ? (
@@ -177,7 +221,7 @@ const FeaturedWork = () => {
               </div>
             ) : (
               randomImages.map((img, index) => (
-                <motion.div key={img.src + index} variants={itemVariants}>
+                <motion.div key={img.projectId + img.src} variants={itemVariants}>
                   <div
                     className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer group"
                     onClick={() => {
@@ -223,19 +267,31 @@ const FeaturedWork = () => {
           <motion.div
             variants={containerVariants}
             initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-100px' }}
+            animate="visible"
             className="grid grid-cols-1 md:grid-cols-3 gap-6"
           >
-            {featuredVideos.map(
-              (video) => (
+            {loadingVideos ? (
+              <div className="col-span-full text-center py-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-600 dark:text-gray-400">Loading videos...</p>
+              </div>
+            ) : errorVideos ? (
+              <div className="col-span-full text-center py-8">
+                <p className="text-red-600 dark:text-red-400">{errorVideos}</p>
+              </div>
+            ) : realVideos.length === 0 ? (
+              <div className="col-span-full text-center py-8">
+                <p className="text-gray-600 dark:text-gray-400">No videos found.</p>
+              </div>
+            ) : (
+              realVideos.map((video) => (
                 <motion.div key={video.id} variants={itemVariants}>
-                  <Link to={`/portfolio?category=cinematics&id=${video.id}`}>
+                  <Link to={`/portfolio/project/${video.projectId}`}>
                     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 relative">
                       <div className="aspect-video overflow-hidden">
                         <video
-                          src={video.videoUrl}
-                          poster={video.thumbnail}
+                          src={video.video_url}
+                          poster={video.video_thumbnail_url}
                           className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                           muted
                           loop
@@ -273,7 +329,7 @@ const FeaturedWork = () => {
                     </div>
                   </Link>
                 </motion.div>
-              )
+              ))
             )}
           </motion.div>
         )}

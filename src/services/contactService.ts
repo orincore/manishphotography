@@ -74,15 +74,7 @@ class ContactService {
       package: packageValue // Also send as 'package' for compatibility
     };
     
-    // Debug: Log the payload being sent
-    console.log('Contact form payload:', payload);
-    console.log('Package value being sent:', packageValue);
-    console.log('Package value type:', typeof packageValue);
-    
     const response = await api.post<{ message: string; contact: ContactSubmission }>('/contact', payload);
-    
-    // Debug: Log the response
-    console.log('Contact API response:', response.data);
     
     return response.data;
   }

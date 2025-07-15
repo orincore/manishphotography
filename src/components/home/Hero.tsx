@@ -41,7 +41,6 @@ const Hero: React.FC = () => {
 
   // Handle video end event
   const handleVideoEnd = () => {
-    console.log('Video ended, advancing to next slide');
     setIsVideoPlaying(false);
     if (heroElements.length > 1) {
       setDirection(1);
@@ -51,7 +50,6 @@ const Hero: React.FC = () => {
 
   // Handle video play event
   const handleVideoPlay = () => {
-    console.log('Video started playing');
     setIsVideoPlaying(true);
   };
 
@@ -124,19 +122,6 @@ const Hero: React.FC = () => {
   const imageUrl = currentElement.media_url || currentElement.image_url;
   const videoUrl = currentElement.media_type === 'video' ? currentElement.media_url : currentElement.video_url;
 
-  // Debug logging
-  console.log('Hero Element Debug:', {
-    id: currentElement.id,
-    type: currentElement.type,
-    media_type: currentElement.media_type,
-    media_url: currentElement.media_url,
-    video_url: currentElement.video_url,
-    image_url: currentElement.image_url,
-    computedVideoUrl: videoUrl,
-    computedImageUrl: imageUrl,
-    isVideo: currentElement.media_type === 'video' || currentElement.type === 'hero-video'
-  });
-
   // Animation variants
   const bgVariants = {
     enter: (direction: number) => ({
@@ -184,13 +169,11 @@ const Hero: React.FC = () => {
               preload="auto"
               className="absolute inset-0 w-full h-full object-cover"
               onError={(e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
-                console.error('Video loading error:', e);
-                console.error('Video URL:', videoUrl);
                 setVideoError(true);
               }}
-              onLoadStart={() => console.log('Video loading started:', videoUrl)}
-              onCanPlay={() => console.log('Video can play:', videoUrl)}
-              onLoadedData={() => console.log('Video data loaded:', videoUrl)}
+              onLoadStart={() => {}}
+              onCanPlay={() => {}}
+              onLoadedData={() => {}}
               onPlay={handleVideoPlay}
               onEnded={handleVideoEnd}
             >

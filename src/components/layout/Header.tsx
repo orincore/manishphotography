@@ -115,7 +115,7 @@ const Header = () => {
               <div className="flex items-center space-x-3 xl:space-x-4">
                 {user?.role === 'admin' && (
                   <Link
-                    to="/admin/dashboard"
+                    to="/admin/projects"
                     className={`font-medium transition-colors text-sm xl:text-base ${
                       isScrolled || mode === 'dark'
                         ? 'text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-white'
@@ -224,7 +224,7 @@ const Header = () => {
                   <>
                     {user?.role === 'admin' && (
                       <Link
-                        to="/admin/dashboard"
+                        to="/admin/projects"
                         className="py-3 px-4 rounded-lg font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors text-base"
                       >
                         Admin Dashboard

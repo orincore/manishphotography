@@ -40,8 +40,6 @@ const AdminLayout = () => {
   };
 
   const navItems = [
-    { label: 'Dashboard', path: '/admin/dashboard', icon: BarChart4 },
-    { label: 'Portfolio Manager', path: '/admin/portfolio-manager', icon: LayoutGrid },
     { label: 'Projects', path: '/admin/projects', icon: Folder },
     { label: 'Packages', path: '/admin/packages', icon: Info },
     { label: 'Upload Project', path: '/admin/projects/new', icon: Upload },
@@ -50,7 +48,6 @@ const AdminLayout = () => {
     { label: 'Team', path: '/admin/team', icon: Users },
     { label: 'Feedback', path: '/admin/feedback', icon: MessageCircle },
     { label: 'Contacts', path: '/admin/contacts', icon: ListChecks },
-    { label: 'Instagram', path: '/admin/instagram', icon: InstagramIcon },
   ];
 
   return (

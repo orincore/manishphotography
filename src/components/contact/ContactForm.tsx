@@ -23,7 +23,6 @@ const ContactForm = () => {
 
   useEffect(() => {
     packageService.getAll().then(data => {
-      console.log('Loaded packages:', data.packages);
       setPackages(data.packages);
     }).catch(error => {
       console.error('Error loading packages:', error);
@@ -102,10 +101,6 @@ const ContactForm = () => {
         ...(formData.location?.trim() && { location: formData.location.trim() }),
         package_id: selectedPackage,
       };
-      
-      // Debug: Log the selected package and payload
-      console.log('Selected package:', selectedPackage);
-      console.log('Form payload:', payload);
       
       await contactService.submitContact(payload);
       
@@ -265,9 +260,6 @@ const ContactForm = () => {
               }))}
               value={selectedPackage}
               onChange={(value) => {
-                console.log('Package selected:', value);
-                const selectedPackageData = packages.find(pkg => pkg.id === value);
-                console.log('Selected package data:', selectedPackageData);
                 setSelectedPackage(value);
                 // Clear package error when a package is selected
                 if (errors.package) {

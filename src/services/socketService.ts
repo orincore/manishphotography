@@ -29,7 +29,6 @@ class SocketIOService implements SocketService {
 
   connect(): void {
     if (this.socket?.connected) {
-      console.log('Socket already connected');
       return;
     }
 
@@ -38,12 +37,10 @@ class SocketIOService implements SocketService {
       this.socket = io(config.socket.url, config.socket.options);
 
       this.socket.on('connect', () => {
-        console.log('Socket.IO connected:', this.socket?.id);
         this.connectCallbacks.forEach(callback => callback());
       });
 
       this.socket.on('disconnect', (reason) => {
-        console.log('Socket.IO disconnected:', reason);
         this.disconnectCallbacks.forEach(callback => callback());
       });
 
@@ -52,7 +49,6 @@ class SocketIOService implements SocketService {
       });
 
       this.socket.on('upload-progress', (progress: UploadProgress) => {
-        console.log('Upload progress received:', progress);
         this.uploadProgressCallbacks.forEach(callback => callback(progress));
       });
 
@@ -76,12 +72,10 @@ class SocketIOService implements SocketService {
     
     if (this.socket?.connected) {
       this.socket.emit('join-upload', uploadId);
-      console.log('Joined upload room:', uploadId);
     } else {
       console.warn('Socket not connected, cannot join upload room');
       // For temporary upload IDs, we'll still track them locally
       if (uploadId.startsWith('temp_')) {
-        console.log('Tracking temporary upload ID locally:', uploadId);
       }
     }
   }
@@ -89,7 +83,6 @@ class SocketIOService implements SocketService {
   leaveUpload(uploadId: string): void {
     if (this.socket?.connected) {
       this.socket.emit('leave-upload', uploadId);
-      console.log('Left upload room:', uploadId);
     }
   }
 

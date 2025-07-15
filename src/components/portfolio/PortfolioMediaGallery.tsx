@@ -43,6 +43,8 @@ const PortfolioMediaGallery: React.FC<PortfolioMediaGalleryProps> = ({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [combinedMedia, setCombinedMedia] = useState<CombinedMedia[]>([]);
+  // Mobile/CSS fullscreen fallback
+  const [cssFullscreen, setCssFullscreen] = useState(false);
 
   useEffect(() => {
     // Combine images and videos for display
@@ -189,12 +191,12 @@ const PortfolioMediaGallery: React.FC<PortfolioMediaGalleryProps> = ({
   };
 
   const handleFullscreenChange = () => {
-    // Set isFullscreen true if either video or container is fullscreen
     const fullscreenEl = document.fullscreenElement;
     if (fullscreenEl === videoRef.current || fullscreenEl === containerRef.current) {
       setIsFullscreen(true);
     } else {
       setIsFullscreen(false);
+      setCssFullscreen(false); // Always reset CSS fullscreen when exiting native fullscreen
     }
   };
 
@@ -223,13 +225,6 @@ const PortfolioMediaGallery: React.FC<PortfolioMediaGalleryProps> = ({
   const isVideo = currentMedia?.type === 'video';
 
   const imageContainerRef = useRef<HTMLDivElement>(null);
-  if (combinedMedia.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-64 bg-gray-100 dark:bg-gray-800 rounded-lg">
-        <p className="text-gray-500 dark:text-gray-400">No media available</p>
-      </div>
-    );
-  }
 
   const handleFullscreen = () => {
     if (imageContainerRef.current) {
@@ -241,191 +236,241 @@ const PortfolioMediaGallery: React.FC<PortfolioMediaGalleryProps> = ({
     }
   };
 
+  // Utility: check if Fullscreen API is supported for the element
+  const canUseFullscreenAPI = () => {
+    const el = isVideo ? videoRef.current : imageContainerRef.current;
+    return el && typeof el.requestFullscreen === 'function';
+  };
+
+  // Unified fullscreen handler
+  const handleUnifiedFullscreen = () => {
+    const el = isVideo ? videoRef.current : imageContainerRef.current;
+    if (canUseFullscreenAPI() && el) {
+      if (!document.fullscreenElement) {
+        el.requestFullscreen();
+      } else {
+        document.exitFullscreen();
+      }
+    } else {
+      setCssFullscreen((prev) => !prev);
+    }
+  };
+
+  // Exit CSS fullscreen on Escape key
+  useEffect(() => {
+    if (!cssFullscreen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setCssFullscreen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [cssFullscreen]);
+
+  if (combinedMedia.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-64 bg-gray-100 dark:bg-gray-800 rounded-lg">
+        <p className="text-gray-500 dark:text-gray-400">No media available</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="portfolio-media-gallery">
-      {/* Main Media Display */}
-      <div 
-        ref={containerRef}
-        className={`relative bg-black rounded-lg overflow-hidden ${
-          isFullscreen ? 'fixed inset-0 z-50' : 'aspect-[16/9]'
-        }`}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={() => {
-          if (isPlaying) {
-            const timeout = setTimeout(() => setShowControls(false), 2000);
-            setControlsTimeout(timeout);
-          }
-        }}
-      >
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentMedia.id}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 1.05 }}
-            transition={{ duration: 0.3 }}
-            className="w-full h-full"
-          >
-            {isVideo ? (
-              <div className="relative w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center aspect-[4/3] md:aspect-[4/3] aspect-auto max-h-[80vh] rounded">
-                <video
-                  ref={videoRef}
-                  src={currentMedia.url}
-                  poster={currentMedia.video_poster || currentMedia.thumbnail}
-                  autoPlay={currentMedia.video_autoplay}
-                  muted={currentMedia.video_muted}
-                  loop={currentMedia.video_loop}
-                  onPlay={() => setIsPlaying(true)}
-                  onPause={() => setIsPlaying(false)}
-                  onEnded={handleVideoEnded}
-                  onTimeUpdate={handleTimeUpdate}
-                  onLoadedMetadata={handleLoadedMetadata}
-                  onVolumeChange={(e) => handleVolumeChange(e.currentTarget.volume)}
-                  className="w-full h-full object-cover max-h-[80vh] rounded"
-                  playsInline
-                />
-                
-                {/* Custom Video Controls Overlay */}
-                <AnimatePresence>
-                  {showControls && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 20 }}
-                      className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4"
-                    >
-                      {/* Progress Bar */}
-                      <div className="mb-3">
-                        <input
-                          type="range"
-                          min="0"
-                          max={duration || 0}
-                          step="0.1"
-                          value={currentTime}
-                          onChange={handleSeek}
-                          className="w-full h-1 bg-white/30 rounded-lg appearance-none cursor-pointer slider"
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between text-white">
-                        <div className="flex items-center gap-3">
-                          <button
-                            onClick={handleVideoPlay}
-                            className="p-2 hover:bg-white/20 rounded-full transition-colors"
-                          >
-                            {isPlaying ? <Pause size={20} /> : <Play size={20} />}
-                          </button>
-                          
-                          <button
-                            onClick={toggleMute}
-                            className="p-2 hover:bg-white/20 rounded-full transition-colors"
-                          >
-                            {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
-                          </button>
-                          
-                          <input
-                            type="range"
-                            min="0"
-                            max="1"
-                            step="0.1"
-                            value={volume}
-                            onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
-                            className="w-20 h-1 bg-white/30 rounded-lg appearance-none cursor-pointer"
-                          />
-                        </div>
-                        
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm">
-                            {formatTime(currentTime)} / {formatTime(duration)}
-                          </span>
-                          
-                          <button
-                            onClick={toggleFullscreen}
-                            className="p-2 hover:bg-white/20 rounded-full transition-colors"
-                          >
-                            {isFullscreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
-                          </button>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* Play Button Overlay for Paused Videos */}
-                {!isPlaying && !showControls && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <button
-                      onClick={handleVideoPlay}
-                      className="p-4 bg-black/50 hover:bg-black/70 rounded-full transition-colors"
-                    >
-                      <Play size={32} className="text-white" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div
-                ref={imageContainerRef}
-                className="relative flex justify-center items-center mx-auto"
-                style={{
-                  aspectRatio: currentMedia.aspectRatio || '4/3',
-                  maxWidth: '80vw',
-                  maxHeight: '80vh',
-                  width: '100%',
-                  background: '#f3f4f6',
-                }}
+    <>
+      <div className="portfolio-media-gallery">
+        {/* Main Media Display */}
+        <AnimatePresence>
+          {(isFullscreen || cssFullscreen) ? (
+            <motion.div
+              key="fullscreen-container"
+              ref={containerRef}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.25 }}
+              className="fixed inset-0 z-50 w-screen h-screen max-w-none max-h-none rounded-none flex items-center justify-center overflow-hidden bg-black"
+              onMouseMove={handleMouseMove}
+              onMouseLeave={() => {
+                if (isPlaying) {
+                  const timeout = setTimeout(() => setShowControls(false), 2000);
+                  setControlsTimeout(timeout);
+                }
+              }}
+            >
+              <motion.div
+                key={currentMedia.id}
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.02 }}
+                transition={{ duration: 0.25 }}
+                className="w-full h-full flex items-center justify-center"
               >
-                <img
-                  src={currentMedia.url}
-                  alt={currentMedia.title || 'Portfolio image'}
-                  className="object-cover rounded mx-auto w-full h-full"
-                  style={{
-                    objectFit: 'cover',
-                    width: '100%',
-                    height: '100%',
-                  }}
-                  onLoad={e => {
-                    const img = e.currentTarget;
-                    const aspect = img.naturalWidth && img.naturalHeight ? img.naturalWidth / img.naturalHeight : 4/3;
-                    if (currentMedia.aspectRatio !== aspect) {
-                      currentMedia.aspectRatio = aspect;
-                      if (typeof window !== 'undefined') window.dispatchEvent(new Event('resize'));
-                    }
-                  }}
-                />
-                <button
-                  onClick={handleFullscreen}
-                  className="absolute top-2 right-2 bg-black bg-opacity-60 text-white rounded-full p-2 hover:bg-opacity-80 transition"
-                  title="Fullscreen"
-                  type="button"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 9V5.25A1.5 1.5 0 015.25 3.75H9m6 0h3.75a1.5 1.5 0 011.5 1.5V9m0 6v3.75a1.5 1.5 0 01-1.5 1.5H15m-6 0H5.25a1.5 1.5 0 01-1.5-1.5V15" />
-                  </svg>
-                </button>
-              </div>
-            )}
-          </motion.div>
+                {isVideo ? (
+                  <video
+                    ref={videoRef}
+                    src={currentMedia.url}
+                    poster={currentMedia.video_poster || currentMedia.thumbnail}
+                    autoPlay={currentMedia.video_autoplay}
+                    muted={currentMedia.video_muted}
+                    loop={currentMedia.video_loop}
+                    onPlay={() => setIsPlaying(true)}
+                    onPause={() => setIsPlaying(false)}
+                    onEnded={handleVideoEnded}
+                    onTimeUpdate={handleTimeUpdate}
+                    onLoadedMetadata={handleLoadedMetadata}
+                    onVolumeChange={(e) => handleVolumeChange(e.currentTarget.volume)}
+                    style={{
+                      objectFit: 'contain',
+                      maxWidth: '100vw',
+                      maxHeight: '100vh',
+                      width: 'auto',
+                      height: 'auto',
+                      display: 'block',
+                      margin: '0 auto',
+                      background: '#000',
+                    }}
+                    playsInline
+                  />
+                ) : (
+                  <img
+                    src={getHighQualityImageUrl(currentMedia.url)}
+                    alt={currentMedia.title || 'Portfolio image'}
+                    style={{
+                      objectFit: 'contain',
+                      maxWidth: '100vw',
+                      maxHeight: '100vh',
+                      width: 'auto',
+                      height: 'auto',
+                      display: 'block',
+                      margin: '0 auto',
+                    }}
+                    className="rounded"
+                    loading="eager"
+                  />
+                )}
+                {/* Only show close (X) button in CSS fullscreen, not in native fullscreen */}
+                {cssFullscreen && (
+                  <button
+                    onClick={() => setCssFullscreen(false)}
+                    className="absolute top-2 left-2 bg-black bg-opacity-60 text-white rounded-full p-2 hover:bg-opacity-80 transition z-10"
+                    title="Exit Fullscreen"
+                    aria-label="Exit Fullscreen"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+                {/* Only show minimize icon in native fullscreen */}
+                {isFullscreen && !cssFullscreen && (
+                  <button
+                    onClick={toggleFullscreen}
+                    className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors z-10"
+                    title="Exit Fullscreen"
+                    aria-label="Exit Fullscreen"
+                  >
+                    <Minimize2 size={24} />
+                  </button>
+                )}
+              </motion.div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="gallery-container"
+              ref={containerRef}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.02 }}
+              transition={{ duration: 0.25 }}
+              className="relative bg-black rounded-lg overflow-hidden aspect-[16/9]"
+              onMouseMove={handleMouseMove}
+              onMouseLeave={() => {
+                if (isPlaying) {
+                  const timeout = setTimeout(() => setShowControls(false), 2000);
+                  setControlsTimeout(timeout);
+                }
+              }}
+            >
+              <motion.div
+                key={currentMedia.id}
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.02 }}
+                transition={{ duration: 0.25 }}
+                className="w-full h-full"
+              >
+                <div className="flex items-center justify-center h-full w-full relative">
+                  {combinedMedia.length > 1 && (
+                    <button
+                      onClick={handlePrevious}
+                      className="bg-black/50 hover:bg-black/70 text-white p-3 sm:p-2 rounded-full transition-colors z-10 mr-2"
+                      style={{ touchAction: 'manipulation' }}
+                    >
+                      <SkipBack size={28} className="mx-auto" />
+                    </button>
+                  )}
+                  {isVideo ? (
+                    <video
+                      ref={videoRef}
+                      src={currentMedia.url}
+                      poster={currentMedia.video_poster || currentMedia.thumbnail}
+                      autoPlay={currentMedia.video_autoplay}
+                      muted={currentMedia.video_muted}
+                      loop={currentMedia.video_loop}
+                      onPlay={() => setIsPlaying(true)}
+                      onPause={() => setIsPlaying(false)}
+                      onEnded={handleVideoEnded}
+                      onTimeUpdate={handleTimeUpdate}
+                      onLoadedMetadata={handleLoadedMetadata}
+                      onVolumeChange={(e) => handleVolumeChange(e.currentTarget.volume)}
+                      className="w-full h-full object-contain max-h-[80vh] rounded"
+                      style={{
+                        objectFit: 'contain',
+                        width: '100%',
+                        height: '100%',
+                      }}
+                      playsInline
+                    />
+                  ) : (
+                    <img
+                      src={getHighQualityImageUrl(currentMedia.url)}
+                      alt={currentMedia.title || 'Portfolio image'}
+                      className="rounded mx-auto w-full h-full"
+                      style={{
+                        objectFit: 'contain',
+                        width: '100%',
+                        height: '100%',
+                      }}
+                      loading="eager"
+                    />
+                  )}
+                  {combinedMedia.length > 1 && (
+                    <button
+                      onClick={handleNext}
+                      className="bg-black/50 hover:bg-black/70 text-white p-3 sm:p-2 rounded-full transition-colors z-10 ml-2"
+                      style={{ touchAction: 'manipulation' }}
+                    >
+                      <SkipForward size={28} className="mx-auto" />
+                    </button>
+                  )}
+                  {/* Only show fullscreen icon when not in any fullscreen mode */}
+                  {!isFullscreen && !cssFullscreen && (
+                    <button
+                      onClick={handleUnifiedFullscreen}
+                      className="absolute top-2 right-2 bg-black bg-opacity-60 text-white rounded-full p-2 hover:bg-opacity-80 transition"
+                      title="Fullscreen"
+                      type="button"
+                      aria-label="Fullscreen"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 9V5.25A1.5 1.5 0 015.25 3.75H9m6 0h3.75a1.5 1.5 0 011.5 1.5V9m0 6v3.75a1.5 1.5 0 01-1.5 1.5H15m-6 0H5.25a1.5 1.5 0 01-1.5-1.5V15" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
         </AnimatePresence>
-
-        {/* Navigation Arrows */}
-        {combinedMedia.length > 1 && (
-          <>
-            <button
-              onClick={handlePrevious}
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
-            >
-              <SkipBack size={24} />
-            </button>
-            
-            <button
-              onClick={handleNext}
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
-            >
-              <SkipForward size={24} />
-            </button>
-          </>
-        )}
 
         {/* Fullscreen Close Button */}
         {isFullscreen && (
@@ -484,6 +529,7 @@ const PortfolioMediaGallery: React.FC<PortfolioMediaGalleryProps> = ({
                       src={media.thumbnail}
                       alt={`${media.type} thumbnail`}
                       className="w-full h-full object-cover"
+                      loading="lazy"
                     />
                   )}
                 </div>
@@ -527,8 +573,18 @@ const PortfolioMediaGallery: React.FC<PortfolioMediaGalleryProps> = ({
           </span>
         </div>
       )}
-    </div>
+    </>
   );
 };
+
+// Utility to get high quality Cloudinary image URL
+function getHighQualityImageUrl(url: string): string {
+  if (!url) return url;
+  // If Cloudinary, inject q_auto:best,dpr_auto after /upload/
+  if (url.includes('res.cloudinary.com') && url.includes('/upload/')) {
+    return url.replace('/upload/', '/upload/q_auto:best,dpr_auto/');
+  }
+  return url;
+}
 
 export default PortfolioMediaGallery; 

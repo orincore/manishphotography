@@ -175,7 +175,6 @@ const HomepageElementsManager: React.FC<HomepageElementsManagerProps> = ({ onClo
                 setBackgroundChecking(false);
                 return true;
               } else {
-                console.log(`Background check attempt ${attempt}: No new elements found`);
                 if (attempt < 10) { // Try up to 10 times (5 minutes total)
                   setTimeout(() => checkUploadStatus(attempt + 1), 30000); // Check every 30 seconds
                 } else {
@@ -185,7 +184,6 @@ const HomepageElementsManager: React.FC<HomepageElementsManagerProps> = ({ onClo
                 return false;
               }
             } catch (err) {
-              console.log(`Background check attempt ${attempt}: Error checking status:`, err);
               if (attempt < 10) { // Try up to 10 times
                 setTimeout(() => checkUploadStatus(attempt + 1), 30000);
               } else {

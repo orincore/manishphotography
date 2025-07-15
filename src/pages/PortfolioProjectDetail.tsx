@@ -16,7 +16,6 @@ const PortfolioProjectDetail: React.FC = () => {
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
 
   useEffect(() => {
-    console.log('PortfolioProjectDetail mounted with projectId:', projectId);
     if (projectId) {
       fetchProject();
     }
@@ -27,11 +26,7 @@ const PortfolioProjectDetail: React.FC = () => {
       setLoading(true);
       setError(null);
       
-      console.log('Fetching project with ID:', projectId);
-      console.log('API URL:', `${config.api.baseURL}/portfolio/project/${projectId}`);
-      
       const projectData = await portfolioService.getProject(projectId!);
-      console.log('Project data received:', projectData);
       setProject(projectData);
       
       // Update page title

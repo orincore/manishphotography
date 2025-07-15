@@ -5,16 +5,10 @@ const DebugAuth = () => {
   const { isAuthenticated, user, isLoading, checkAuth } = useAuthStore();
 
   useEffect(() => {
-    console.log('DebugAuth: Checking authentication...');
     checkAuth();
   }, [checkAuth]);
 
   useEffect(() => {
-    console.log('DebugAuth: Auth state changed:', {
-      isAuthenticated,
-      user,
-      isLoading
-    });
   }, [isAuthenticated, user, isLoading]);
 
   return (

@@ -23,10 +23,7 @@ const NotFound = lazy(() => import('../pages/NotFound'));
 // Admin pages
 const AdminLogin = lazy(() => import('../components/admin/AdminLogin'));
 const AdminLayout = lazy(() => import('../components/admin/AdminLayout'));
-const AdminDashboard = lazy(() => import('../pages/admin/AdminDashboard'));
 const TestDashboard = lazy(() => import('../components/admin/TestDashboard'));
-const SimpleDashboard = lazy(() => import('../components/admin/SimpleDashboard'));
-const SimpleAdminDashboard = lazy(() => import('../components/admin/SimpleAdminDashboard'));
 const CategoriesList = lazy(() => import('../pages/admin/CategoriesList'));
 const ProjectUpload = lazy(() => import('../pages/admin/ProjectUpload'));
 const ProjectsList = lazy(() => import('../pages/admin/ProjectsList'));
@@ -35,7 +32,6 @@ const HomepageElementsManager = lazy(() => import('../components/admin/HomepageE
 const ProgressTrackingDemo = lazy(() => import('../components/debug/ProgressTrackingDemo'));
 const FeedbackManagement = lazy(() => import('../pages/admin/FeedbackManagement'));
 const ContactManagement = lazy(() => import('../pages/admin/ContactManagement'));
-const PortfolioProjectManager = lazy(() => import('../components/admin/PortfolioProjectManager'));
 const TeamManager = lazy(() => import('../components/admin/TeamManager'));
 const AboutSectionManager = lazy(() => import('../components/admin/AboutSectionManager'));
 const Packages = lazy(() => import('../pages/admin/Packages'));
@@ -79,16 +75,12 @@ const AppRoutes = () => {
               </ErrorBoundary>
             } 
           >
-            <Route index element={<Navigate to="/admin/dashboard" replace />} />
-            <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="simple" element={<SimpleDashboard />} />
-            <Route path="simple-admin" element={<SimpleAdminDashboard />} />
+            <Route index element={<Navigate to="/admin/projects" replace />} />
             <Route path="test" element={<TestDashboard />} />
             <Route path="categories" element={<CategoriesList />} />
             <Route path="projects" element={<ProjectsList />} />
             <Route path="projects/new" element={<ProjectUpload />} />
             <Route path="projects/edit/:projectId" element={<EditProject />} />
-            <Route path="portfolio-manager" element={<PortfolioProjectManager />} />
             <Route path="homepage" element={<HomepageElementsManager />} />
             <Route path="progress-demo" element={<ProgressTrackingDemo />} />
             <Route path="feedback" element={<FeedbackManagement />} />

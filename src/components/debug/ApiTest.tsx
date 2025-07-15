@@ -10,10 +10,8 @@ const ApiTest = () => {
     const testApi = async () => {
       try {
         setLoading(true);
-        console.log('Testing API connection...');
         
         const response = await portfolioService.getCategories();
-        console.log('API Response:', response);
         
         setCategories(response.categories);
         setError(null);

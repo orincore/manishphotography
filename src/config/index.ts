@@ -2,7 +2,7 @@
 export const config = {
   // API Configuration
   api: {
-    baseURL: import.meta.env.VITE_API_BASE_URL || 'https://api.manishbosephotography.com/api',
+    baseURL: import.meta.env.VITE_API_BASE_URL || 'api.manishbosephotography.com',
     timeout: 1800000, // 30 minutes for video uploads
   },
   

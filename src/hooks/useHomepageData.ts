@@ -121,7 +121,6 @@ export const useHeroSection = () => {
       setLoading(true);
       setError(null);
       const heroData = await homepageService.getActiveHeroElements();
-      console.log('Hero data fetched:', heroData);
       setElements(heroData);
     } catch (err) {
       console.error('Error fetching hero data:', err);

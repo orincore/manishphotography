@@ -88,12 +88,10 @@ const CategoryPage = () => {
 
   const handleEditImage = (project: any, img: any) => {
     // TODO: Implement edit functionality
-    console.log('Edit image:', project, img);
   };
 
   const handleDeleteImage = (project: any, img: any) => {
     // TODO: Implement delete functionality
-    console.log('Delete image:', project, img);
   };
 
   if (loading) {

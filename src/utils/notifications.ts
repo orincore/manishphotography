@@ -50,7 +50,6 @@ export const showNotification = (message: string, type: NotificationType = 'info
     }
   } catch (error) {
     // Fallback to console if toast is not available
-    console.log(`[${type.toUpperCase()}] ${message}`);
     
     // Fallback to browser alert for errors
     if (type === 'error') {

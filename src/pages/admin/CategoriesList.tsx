@@ -18,10 +18,8 @@ const CategoriesList = () => {
     try {
       setLoading(true);
       setError(null);
-      console.log('Fetching categories from API...');
       
       const response = await adminService.getCategories();
-      console.log('Categories response:', response);
       
       setCategories(response.categories || []);
     } catch (err: any) {

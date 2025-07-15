@@ -22,8 +22,6 @@ const AdminNavbar = () => {
   const location = useLocation();
   
   const navItems = [
-    { label: 'Dashboard', path: '/admin/dashboard', icon: <BarChart4 size={20} /> },
-    { label: 'Portfolio Manager', path: '/admin/portfolio-manager', icon: <LayoutGrid size={20} /> },
     { label: 'Projects', path: '/admin/projects', icon: <Folder size={20} /> },
     { label: 'Packages', path: '/admin/packages', icon: <PackageIcon size={20} /> },
     { label: 'Upload Project', path: '/admin/projects/new', icon: <Upload size={20} /> },
@@ -32,7 +30,6 @@ const AdminNavbar = () => {
     { label: 'Team', path: '/admin/team', icon: <Users size={20} /> },
     { label: 'Feedback', path: '/admin/feedback', icon: <MessageCircle size={20} /> },
     { label: 'Contacts', path: '/admin/contacts', icon: <ListChecks size={20} /> },
-    { label: 'Instagram', path: '/admin/instagram', icon: <InstagramIcon size={20} /> },
   ];
 
   return (
