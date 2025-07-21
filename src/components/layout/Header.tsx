@@ -209,6 +209,7 @@ const Header = () => {
                 <Link
                   key={item.path}
                   to={item.path}
+                  onClick={() => setIsMobileMenuOpen(false)}
                   className={`py-3 px-4 rounded-lg font-medium transition-colors text-base ${
                     location.pathname === item.path
                       ? 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-400'
@@ -225,13 +226,17 @@ const Header = () => {
                     {user?.role === 'admin' && (
                       <Link
                         to="/admin/projects"
+                        onClick={() => setIsMobileMenuOpen(false)}
                         className="py-3 px-4 rounded-lg font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors text-base"
                       >
                         Admin Dashboard
                       </Link>
                     )}
                     <button
-                      onClick={logout}
+                      onClick={() => {
+                        logout();
+                        setIsMobileMenuOpen(false);
+                      }}
                       className="py-3 px-4 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors w-full text-left text-base"
                     >
                       Logout
@@ -241,12 +246,14 @@ const Header = () => {
                   <>
                     <Link
                       to="/login"
+                      onClick={() => setIsMobileMenuOpen(false)}
                       className="py-3 px-4 rounded-lg font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors text-base"
                     >
                       Login
                     </Link>
                     <Link
                       to="/register"
+                      onClick={() => setIsMobileMenuOpen(false)}
                       className="py-3 px-4 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors text-base"
                     >
                       Register

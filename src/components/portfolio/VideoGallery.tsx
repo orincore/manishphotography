@@ -43,10 +43,11 @@ const VideoGallery: React.FC<VideoGalleryProps> = ({ videos }) => {
         <motion.div
           key={video.id}
           variants={itemVariants}
-          className="overflow-hidden rounded-lg cursor-pointer group bg-white dark:bg-gray-800 shadow-md hover:shadow-xl transition-shadow"
+          className="rounded-lg bg-white dark:bg-gray-800 shadow-md hover:shadow-xl transition-shadow overflow-hidden flex flex-col cursor-pointer"
           onClick={() => handleVideoClick(video.videoUrl)}
         >
-          <div className="relative aspect-video overflow-hidden">
+          {/* Inner video area with overlay */}
+          <div className="aspect-video relative bg-black">
             <video
               src={video.videoUrl}
               poster={video.thumbnail}
@@ -59,18 +60,21 @@ const VideoGallery: React.FC<VideoGalleryProps> = ({ videos }) => {
               onMouseOver={e => e.currentTarget.play()}
               onMouseOut={e => { e.currentTarget.pause(); e.currentTarget.currentTime = 0; }}
             />
-            <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center pointer-events-none">
-              <motion.div
-                whileHover={{ scale: 1.1 }}
-                className="rounded-full bg-white/80 p-4"
-              >
-                <Play size={32} className="text-blue-600" />
-              </motion.div>
+            {/* Play button overlay only on video area */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="flex items-center justify-center rounded-full bg-white bg-opacity-80 p-4">
+                <Play size={32} className="w-8 h-8 text-blue-600" />
+              </div>
             </div>
           </div>
-          <div className="p-4 bg-white dark:bg-gray-800">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{video.title}</h3>
-            <p className="text-gray-600 dark:text-gray-300 mt-1">{video.description}</p>
+          {/* Card content (title, description) below video */}
+          <div className="p-5 flex-1 flex flex-col justify-between">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              {video.title}
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300">
+              {video.description}
+            </p>
           </div>
         </motion.div>
       ))}
